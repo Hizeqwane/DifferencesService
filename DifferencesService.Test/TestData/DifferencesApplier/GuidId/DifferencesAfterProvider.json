@@ -1,0 +1,159 @@
+﻿[
+  {
+    "Id": "eec823da-2331-4ada-b50a-2670c09207c4",
+    "EntityId": "781bbeaf-56c3-413b-ac24-eecfc3143f65",
+    "PropertyPath": "Name",
+    "OldValue": "Продукт 1",
+    "NewValue": "Продукт 1 - поменяли имя",
+    "Childs": null
+  },
+  {
+    "Id": "4cf2e137-6e56-4750-9856-8da8c6d83fc0",
+    "EntityId": "781bbeaf-56c3-413b-ac24-eecfc3143f65",
+    "PropertyPath": "License",
+    "OldValue": null,
+    "NewValue": null,
+    "Childs": [
+      {
+        "Id": "45327d93-289c-44db-9629-0c69e40b6615",
+        "EntityId": "00000000-0000-0000-0000-000000000000",
+        "PropertyPath": "Id",
+        "OldValue": "00000000-0000-0000-0000-000000000000",
+        "NewValue": "7276ea30-2a4c-49f4-abc7-3baa178da953",
+        "Childs": null
+      },
+      {
+        "Id": "b5b5142b-6b7d-4d05-90c3-67270541f548",
+        "EntityId": "7276ea30-2a4c-49f4-abc7-3baa178da953",
+        "PropertyPath": "Name",
+        "OldValue": null,
+        "NewValue": "Лицензия продукта 1 - обновили",
+        "Childs": null
+      },
+      {
+        "Id": "d93d6822-aac8-4ecb-a5f9-1c9d3cf81799",
+        "EntityId": "7276ea30-2a4c-49f4-abc7-3baa178da953",
+        "PropertyPath": "Type",
+        "OldValue": null,
+        "NewValue": "Ну просто лицензия продукта 1 - обновили",
+        "Childs": null
+      }
+    ]
+  },
+  {
+    "Id": "b76eef90-5721-4641-8962-95265c9d7b2b",
+    "EntityId": "781bbeaf-56c3-413b-ac24-eecfc3143f65",
+    "PropertyPath": "Registration",
+    "OldValue": null,
+    "NewValue": null,
+    "Childs": [
+      {
+        "Id": "313344a6-7f3a-434c-8007-d2ed429f034f",
+        "EntityId": "d5c63d7c-47dc-4133-a484-6a8aca6c8947",
+        "PropertyPath": "Name",
+        "OldValue": "Регистрацию удалим",
+        "NewValue": null,
+        "Childs": null
+      },
+      {
+        "Id": "1ef48edf-c044-4242-8d5a-7e6b135ca523",
+        "EntityId": "d5c63d7c-47dc-4133-a484-6a8aca6c8947",
+        "PropertyPath": "Id",
+        "OldValue": "d5c63d7c-47dc-4133-a484-6a8aca6c8947",
+        "NewValue": "00000000-0000-0000-0000-000000000000",
+        "Childs": null
+      }
+    ]
+  },
+  {
+    "Id": "4422e0e4-1ee8-44f1-bb73-c7740521494d",
+    "EntityId": "781bbeaf-56c3-413b-ac24-eecfc3143f65",
+    "PropertyPath": "Documents",
+    "OldValue": null,
+    "NewValue": null,
+    "Childs": [
+      {
+        "Id": "345e24c8-df3b-40b2-9e09-d4b6059fd591",
+        "EntityId": "00000000-0000-0000-0000-000000000000",
+        "PropertyPath": "Id",
+        "OldValue": "00000000-0000-0000-0000-000000000000",
+        "NewValue": "edeea1ce-3665-4924-b2fd-069a5077d5cf",
+        "Childs": null
+      },
+      {
+        "Id": "80e5c914-9509-4658-81f2-a60e1dd34052",
+        "EntityId": "edeea1ce-3665-4924-b2fd-069a5077d5cf",
+        "PropertyPath": "Name",
+        "OldValue": null,
+        "NewValue": "Новый документ первого продукта",
+        "Childs": null
+      },
+      {
+        "Id": "2fbf5a84-28c2-4fc8-9097-88df715f6fbb",
+        "EntityId": "edeea1ce-3665-4924-b2fd-069a5077d5cf",
+        "PropertyPath": "Attachments",
+        "OldValue": null,
+        "NewValue": null,
+        "Childs": [
+          {
+            "Id": "687eee3d-6bbf-4f7c-9ad1-508934a5f32e",
+            "EntityId": "00000000-0000-0000-0000-000000000000",
+            "PropertyPath": "Id",
+            "OldValue": "00000000-0000-0000-0000-000000000000",
+            "NewValue": "9ccffa5a-9c3d-467e-b838-20c14923eba9",
+            "Childs": null
+          },
+          {
+            "Id": "00a94ae2-aba9-4a28-bb2d-634dbfa2e377",
+            "EntityId": "9ccffa5a-9c3d-467e-b838-20c14923eba9",
+            "PropertyPath": "FileName",
+            "OldValue": null,
+            "NewValue": "Новый файл нового документа",
+            "Childs": null
+          }
+        ]
+      },
+      {
+        "Id": "c6338030-be52-4cbb-96e5-17673f9e2008",
+        "EntityId": "8f0386d4-de7e-476b-aa25-48ee9334160e",
+        "PropertyPath": "Name",
+        "OldValue": "Первый документ первого продукта",
+        "NewValue": "Первый документ первого продукта - обновили",
+        "Childs": null
+      },
+      {
+        "Id": "650f6bce-5171-4899-a911-7f83f829d5a2",
+        "EntityId": "5f845a43-f37a-46cd-a009-52b87a495a67",
+        "PropertyPath": "Attachments",
+        "OldValue": null,
+        "NewValue": null,
+        "Childs": [
+          {
+            "Id": "d204ea36-5abd-4ac3-a58c-937918dfc222",
+            "EntityId": "2e6363de-3914-44e0-9c7a-f3a69352fefa",
+            "PropertyPath": "FileName",
+            "OldValue": "Второй файл второго документа первого продукта",
+            "NewValue": "Второй файл второго документа первого продукта - обновили",
+            "Childs": null
+          }
+        ]
+      },
+      {
+        "Id": "b1817d68-d8cf-425c-910e-8ade51f69eee",
+        "EntityId": "562a03ac-919b-4601-9f40-7a32aa16a8a8",
+        "PropertyPath": "Name",
+        "OldValue": "Документ для удаления",
+        "NewValue": null,
+        "Childs": null
+      },
+      {
+        "Id": "90adefd4-f1ee-4a2c-81fa-5701ef8024e7",
+        "EntityId": "562a03ac-919b-4601-9f40-7a32aa16a8a8",
+        "PropertyPath": "Id",
+        "OldValue": "562a03ac-919b-4601-9f40-7a32aa16a8a8",
+        "NewValue": "00000000-0000-0000-0000-000000000000",
+        "Childs": null
+      }
+    ]
+  }
+]

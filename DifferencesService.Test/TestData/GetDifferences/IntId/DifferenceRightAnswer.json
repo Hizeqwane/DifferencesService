@@ -1,0 +1,159 @@
+﻿[
+  {
+    "Id": 1,
+    "EntityId": 1,
+    "PropertyPath": "Name",
+    "OldValue": "Продукт 1",
+    "NewValue": "Продукт 1 - поменяли имя",
+    "Childs": null
+  },
+  {
+    "Id": 2,
+    "EntityId": 1,
+    "PropertyPath": "License",
+    "OldValue": null,
+    "NewValue": null,
+    "Childs": [
+      {
+        "Id": 3,
+        "EntityId": 0,
+        "PropertyPath": "Id",
+        "OldValue": "0",
+        "NewValue": "1",
+        "Childs": null
+      },
+      {
+        "Id": 4,
+        "EntityId": 1,
+        "PropertyPath": "Name",
+        "OldValue": null,
+        "NewValue": "Лицензия продукта 1 - обновили",
+        "Childs": null
+      },
+      {
+        "Id": 5,
+        "EntityId": 1,
+        "PropertyPath": "Type",
+        "OldValue": null,
+        "NewValue": "Ну просто лицензия продукта 1 - обновили",
+        "Childs": null
+      }
+    ]
+  },
+  {
+    "Id": 6,
+    "EntityId": 1,
+    "PropertyPath": "Registration",
+    "OldValue": null,
+    "NewValue": null,
+    "Childs": [
+      {
+        "Id": 7,
+        "EntityId": 0,
+        "PropertyPath": "Name",
+        "OldValue": "Регистрацию удалим",
+        "NewValue": null,
+        "Childs": null
+      },
+      {
+        "Id": 8,
+        "EntityId": 0,
+        "PropertyPath": "Id",
+        "OldValue": "0",
+        "NewValue": "0",
+        "Childs": null
+      }
+    ]
+  },
+  {
+    "Id": 9,
+    "EntityId": 1,
+    "PropertyPath": "Documents",
+    "OldValue": null,
+    "NewValue": null,
+    "Childs": [
+      {
+        "Id": 10,
+        "EntityId": 0,
+        "PropertyPath": "Id",
+        "OldValue": "0",
+        "NewValue": "13",
+        "Childs": null
+      },
+      {
+        "Id": 11,
+        "EntityId": 13,
+        "PropertyPath": "Name",
+        "OldValue": null,
+        "NewValue": "Новый документ первого продукта",
+        "Childs": null
+      },
+      {
+        "Id": 12,
+        "EntityId": 13,
+        "PropertyPath": "Attachments",
+        "OldValue": null,
+        "NewValue": null,
+        "Childs": [
+          {
+            "Id": 13,
+            "EntityId": 0,
+            "PropertyPath": "Id",
+            "OldValue": "0",
+            "NewValue": "133",
+            "Childs": null
+          },
+          {
+            "Id": 14,
+            "EntityId": 133,
+            "PropertyPath": "FileName",
+            "OldValue": null,
+            "NewValue": "Новый файл нового документа",
+            "Childs": null
+          }
+        ]
+      },
+      {
+        "Id": 15,
+        "EntityId": 11,
+        "PropertyPath": "Name",
+        "OldValue": "Первый документ первого продукта",
+        "NewValue": "Первый документ первого продукта - обновили",
+        "Childs": null
+      },
+      {
+        "Id": 17,
+        "EntityId": 12,
+        "PropertyPath": "Attachments",
+        "OldValue": null,
+        "NewValue": null,
+        "Childs": [
+          {
+            "Id": 18,
+            "EntityId": 112,
+            "PropertyPath": "FileName",
+            "OldValue": "Второй файл второго документа первого продукта",
+            "NewValue": "Второй файл второго документа первого продукта - обновили",
+            "Childs": null
+          }
+        ]
+      },
+      {
+        "Id": 19,
+        "EntityId": 15,
+        "PropertyPath": "Name",
+        "OldValue": "Документ для удаления",
+        "NewValue": null,
+        "Childs": null
+      },
+      {
+        "Id": 20,
+        "EntityId": 15,
+        "PropertyPath": "Id",
+        "OldValue": "15",
+        "NewValue": "0",
+        "Childs": null
+      }
+    ]
+  }
+]

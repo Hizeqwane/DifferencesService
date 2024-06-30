@@ -1,0 +1,148 @@
+[
+  // Меняем масиив документов - добавляем, удаляем, меняем вложенный объект
+  {
+    "Id": 1,
+    "EntityId": 1,
+    "PropertyPath": "Documents",
+    "OldValue": null,
+    "NewValue": null,
+    "Childs": [
+      {
+        "Id": 11,
+        "EntityId": 11,
+        "PropertyPath": "Name",
+        "OldValue": "Первый документ первого продукта",
+        "NewValue": "Первый документ первого продукта - обновили",
+        "Childs": null
+      },
+      {
+        "Id": 12,
+        "EntityId": 12,
+        "PropertyPath": "Attachments",
+        "OldValue": null,
+        "NewValue": null,
+        "Childs": [
+          {
+            "Id": 121,
+            "EntityId": 112,
+            "PropertyPath": "FileName",
+            "OldValue": "Второй файл второго документа первого продукта",
+            "NewValue": "Второй файл второго документа первого продукта - обновили",
+            "Childs": null
+          }
+        ]
+      },
+      {
+        "Id": 13,
+        "EntityId": 13,
+        "PropertyPath": "Name",
+        "OldValue": null,
+        "NewValue": "Новый документ первого продукта",
+        "Childs": null
+      },
+      {
+        "Id": 13,
+        "EntityId": 13,
+        "PropertyPath": "Attachments",
+        "OldValue": null,
+        "NewValue": null,
+        "Childs": [
+          {
+            "Id": 6,
+            "EntityId": 133,
+            "PropertyPath": "FileName",
+            "OldValue": null,
+            "NewValue": "Новый файл нового документа",
+            "Childs": null
+          }
+        ]
+      },
+      {
+        "Id": 14,
+        "EntityId": 15,
+        "PropertyPath": null,
+        "OldValue": null,
+        "NewValue": null,
+        "Childs": null
+      }
+    ]
+  },
+  // Обнуляем регистрацию
+  {
+    "Id": 2,
+    "EntityId": 1,
+    "PropertyPath": "Registration",
+    "OldValue": null,
+    "NewValue": null,
+    "Childs": null
+  },
+  // Устанавливаем лицензию
+  {
+    "Id": 3,
+    "EntityId": 1,
+    "PropertyPath": "License",
+    "OldValue": null,
+    "NewValue": null,
+    "Childs": [
+      {
+        "Id": 31,
+        "EntityId": 0,
+        "PropertyPath": "Id",
+        "OldValue": 0,
+        "NewValue": 1,
+        "Childs": null
+      },
+      {
+        "Id": 32,
+        "EntityId": 1,
+        "PropertyPath": "Name",
+        "OldValue": null,
+        "NewValue": "Новое имя новой лицензии",
+        "Childs": null
+      },
+      {
+        "Id": 33,
+        "EntityId": 1,
+        "PropertyPath": "Type",
+        "OldValue": null,
+        "NewValue": "Новый тип новой лицензии",
+        "Childs": null
+      }
+    ]
+  },
+  // Меняем лицензию
+  {
+    "Id": 4,
+    "EntityId": 1,
+    "PropertyPath": "License",
+    "OldValue": null,
+    "NewValue": null,
+    "Childs": [
+      {
+        "Id": 41,
+        "EntityId": 1,
+        "PropertyPath": "Name",
+        "OldValue": "Новое имя новой лицензии",
+        "NewValue": "Лицензия продукта 1 - обновили",
+        "Childs": null
+      },
+      {
+        "Id": 42,
+        "EntityId": 1,
+        "PropertyPath": "Type",
+        "OldValue": "Новый тип новой лицензии",
+        "NewValue": "Ну просто лицензия продукта 1 - обновили",
+        "Childs": null
+      }
+    ]
+  },
+  // Устанавливаем Имя
+  {
+    "Id": 5,
+    "EntityId": 1,
+    "PropertyPath": "Name",
+    "OldValue": "Продукт 1",
+    "NewValue": "Продукт 1 - поменяли имя",
+    "Childs": null
+  }
+]
