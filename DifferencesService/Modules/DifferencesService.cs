@@ -272,12 +272,18 @@ public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorPr
             // Добавляем свойство, которое было null
             if (primaryObjPropertyValue == null)
             {
-                newDifference.Childs = GetCtorDifferences(secondaryObjPropertyValue!);
+                if (secondaryObjPropertyValue is not IEnumerable secondaryObjPropertyEnumValue)
+                    newDifference.Childs.AddRange(GetCtorDifferences(secondaryObjPropertyValue!));
+                else
+                    newDifference.Childs.AddRange(secondaryObjPropertyEnumValue.OfType<object>().SelectMany(GetCtorDifferences));
             } 
             // Обнулили свойство
             else if (secondaryObjPropertyValue == null)
             {
-                newDifference.Childs = GetDeCtorDifferences(primaryObjPropertyValue);
+                if (primaryObjPropertyValue is not IEnumerable primaryObjPropertyEnumValue)
+                    newDifference.Childs.AddRange(GetDeCtorDifferences(primaryObjPropertyValue!));
+                else
+                    newDifference.Childs.AddRange(primaryObjPropertyEnumValue.OfType<object>().SelectMany(GetDeCtorDifferences));
             }
             // Свойство было изменено внутри
             else
