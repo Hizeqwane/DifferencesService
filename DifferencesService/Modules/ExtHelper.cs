@@ -3,25 +3,8 @@ using System.Reflection;
 
 namespace DifferencesService.Modules;
 
-public static class Extensions
+public static class ExtHelper
 {
-    public static string IdentificationPropertyName { get; private set; } = "Id";
-
-    public static void SetIdentificationPropertyName(string identificationPropertyName) => 
-        IdentificationPropertyName = identificationPropertyName;
-
-    public static PropertyInfo FindIdPropertyAndThrow(
-        this Type typeOfObject,
-        PropertyInfo[]? properties = null)
-    {
-        properties ??= typeOfObject.GetProperties();
-        var idProperty = properties.FirstOrDefault(s => s.Name == IdentificationPropertyName);
-        if (idProperty == null)
-            throw new InvalidDataException($"Идентификационное свойство {IdentificationPropertyName} не найдено для объекта типа {typeOfObject.FullName}.");
-        
-        return idProperty;
-    }
-
     public static bool IsEqualsFromToString(this object? primaryObjId, object? secondaryObjId)
     {
         if (primaryObjId == null)

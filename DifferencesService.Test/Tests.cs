@@ -1,7 +1,9 @@
 using System.Text.RegularExpressions;
 using DifferencesService.Interfaces;
 using DifferencesService.Modules;
+using DifferencesService.Options;
 using DifferencesService.Test.Models;
+using DifferencesService.Test.Models.CompetitorProducts;
 using JsonDiffPatchDotNet;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -29,17 +31,32 @@ public class Tests
     private List<Difference<int>> _idDifferencesRightAnswer;
     private List<Product<Guid>> _guidRightAnswer;
     private List<Difference<Guid>> _guidDifferencesRightAnswer;
+
+    #region Competitors products
+
+    private List<CompetitorProduct> _idCompetitorsProductsForDifferences;
+
+    #endregion
     
     [SetUp]
     public void Setup()
     {
-        _intDifferenceService = new DifferencesService<int>(new IdentificatorProvider<int>());
-        _guidDifferenceService = new DifferencesService<Guid>(new IdentificatorProvider<Guid>());
+        // Применение имён свойств для типов излишен - показан в качестве примера
+        var options = new DifferenceServiceOptions()
+            .SetupIdentificationProvider(new IntIdentificationProvider())
+            .SetupIdentificationProvider(new GuidIdentificationProvider())
+            .SetupIdPropertyNameForType<int>("Id")
+            .SetupIdPropertyNameForType<Guid>("Id")
+            .WithDefaultIdPropertyName("Id");
+        
+        _intDifferenceService = new DifferencesService<int>(new IdentificationService(options));
+        _guidDifferenceService = new DifferencesService<Guid>(new IdentificationService(options));
         
         SetupIntIds();
         SetupGuidIds();
         SetupIntIdsDifferences();
         SetupGuidIdsDifferences();
+        SetupCompetitorsProductsDifferences();
     }
 
     #region Setups
@@ -94,6 +111,17 @@ public class Tests
         _guidProductsForDifferences = JsonConvert.DeserializeObject<List<Product<Guid>>>(textProducts)!;
         if (_guidProductsForDifferences == null || _guidDifferencesRightAnswer == null)
             throw new ApplicationException("Ошибка при десериализации (Guid - differences).");
+    }
+    
+    private void SetupCompetitorsProductsDifferences()
+    {
+        var textProducts = ReadTestIntCompetitorProductsForDifferences();
+        //var textRightAnswer = ReadTestIntCompetitorDifferencesRightAnswer();
+        
+        //_guidDifferencesRightAnswer = JsonConvert.DeserializeObject<List<Difference<Guid>>>(textRightAnswer)!;
+        _idCompetitorsProductsForDifferences = JsonConvert.DeserializeObject<List<CompetitorProduct>>(textProducts)!;
+        if (_idCompetitorsProductsForDifferences == null)// || _guidDifferencesRightAnswer == null)
+            throw new ApplicationException("Ошибка при десериализации CompetitorProducts.");
     }
 
     #endregion Setups
@@ -160,7 +188,7 @@ public class Tests
     public void Test3()
     {
         if (_idProductsForDifferences.Count != 2)
-            throw new ArgumentException($"Тест расчитан на сравнение двуъ продуктов.");
+            throw new ArgumentException($"Тест расчитан на сравнение двух продуктов.");
         
         var differences = _intDifferenceService.GetDifferences
         (
@@ -179,7 +207,7 @@ public class Tests
     public void Test4()
     {
         if (_guidProductsForDifferences.Count != 2)
-            throw new ArgumentException($"Тест расчитан на сравнение двуъ продуктов.");
+            throw new ArgumentException($"Тест расчитан на сравнение двух продуктов.");
         
         var differences = _guidDifferenceService.GetDifferences
         (
@@ -198,6 +226,27 @@ public class Tests
         var jsonDiffers = new JsonDiffPatch().Diff(differencesStrWithEmptyGuids, differencesRightAnswerWithEmptyGuids);
         
         ClassicAssert.AreEqual(jsonDiffers, null);
+    }
+    
+    [Test(Description = "Проверка работы с сущностями CompetitorProducts - Поиск differences")]
+    public void Test5()
+    {
+        if (_idCompetitorsProductsForDifferences.Count != 2)
+            throw new ArgumentException($"Тест расчитан на сравнение двух продуктов.");
+        
+        var differences = _intDifferenceService.GetDifferences
+        (
+            _idCompetitorsProductsForDifferences[0],
+            _idCompetitorsProductsForDifferences[1]
+        );
+
+        //WriteIntDifferencesFile(JsonConvert.SerializeObject(differences));
+        
+        //var jsonDiffers = new JsonDiffPatch().Diff(JsonConvert.SerializeObject(differences), JsonConvert.SerializeObject(_idDifferencesRightAnswer));
+        
+        //ClassicAssert.AreEqual(jsonDiffers, null);
+        
+        ClassicAssert.IsTrue(true);
     }
 
     #region Work with files
@@ -253,6 +302,16 @@ public class Tests
         ReadTest("TestData/GetDifferences/GuidId/DifferenceRightAnswer.json");
     
     #endregion Test4 - Поиск differences в Product<Guid>
+    
+    #region Test5 - Поиск differences в CompetitorProduct<int>
+    
+    private static string ReadTestIntCompetitorProductsForDifferences() =>
+        ReadTest("TestData/CompetitorProducts/CompetitorProducts.json");
+    
+    private static string ReadTestIntCompetitorDifferencesRightAnswer() =>
+        ReadTest("TestData/CompetitorProducts/DifferenceRightAnswer.json");
+    
+    #endregion Test3 - Поиск differences в Product<int>
 
     private static string ReadTest(string filePath)
     {

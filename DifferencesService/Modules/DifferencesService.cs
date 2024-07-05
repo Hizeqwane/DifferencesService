@@ -5,7 +5,7 @@ using DifferencesService.Interfaces;
 
 namespace DifferencesService.Modules;
 
-public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorProvider) : IDifferenceService<TId>
+public class DifferencesService<TId>(IIdentificationService identificationService) : IDifferenceService<TId>
 {
     public void Patch(object sourceObject, IEnumerable<Difference<TId>> differences) => 
         InternalPatch(sourceObject, differences);
@@ -20,7 +20,7 @@ public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorPr
         var typeOfObject = sourceObject.GetType();
         var properties = typeOfObject.GetProperties();
 
-        var idProperty = typeOfObject.FindIdPropertyAndThrow(properties);
+        var idProperty = identificationService.FindIdPropertyAndThrow(typeOfObject, properties);
         var idPropertyValue = idProperty.GetValue(sourceObject);
         
         foreach (var difference in differences)
@@ -66,7 +66,7 @@ public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorPr
                 property.SetValue(sourceObject, valueForSetting);
                 
                 // Если поменяли id - устанавливаем вложенный объект
-                if (property.Name == Extensions.IdentificationPropertyName)
+                if (property.Name == identificationService.GetIdPropertyName(typeOfObject))
                     idPropertyValue = idProperty.GetValue(sourceObject);
                     
                 continue;
@@ -77,7 +77,7 @@ public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorPr
             {
                 // Если было найдено дочернее изменение Id на default - удаляем свойство
                 if (difference.Childs
-                        .FirstOrDefault(s => s.PropertyPath == Extensions.IdentificationPropertyName &&
+                        .FirstOrDefault(s => s.PropertyPath == identificationService.GetIdPropertyName(typeOfObject) &&
                                              s.NewValue == default(TId)?.ToString()) != null)
                 {
                     property.SetValue(sourceObject, null);
@@ -110,7 +110,7 @@ public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorPr
             return;
         
         // Убеждаемся, что вложенная сущность имеет идентификационное свойство
-        var idProperty = entityType.FindIdPropertyAndThrow();
+        var idProperty = identificationService.FindIdPropertyAndThrow(entityType);
         
         // Формируем список для обработки
         var propertyEntityValueList = (propertyValue as IEnumerable)
@@ -222,7 +222,7 @@ public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorPr
             throw new ArgumentException($"Типы объектов не совпадают.");
         
         var properties = typeOfObject.GetProperties();
-        var idProperty = typeOfObject.FindIdPropertyAndThrow(properties);
+        var idProperty = identificationService.FindIdPropertyAndThrow(typeOfObject, properties);
         
         var primaryObjIdPropertyValue = idProperty.GetValue(primaryObj);
         var secondaryObjIdPropertyValue = idProperty.GetValue(secondaryObj);
@@ -246,7 +246,7 @@ public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorPr
                 
                 var newSimpleDifference = new Difference<TId>
                 {
-                    Id = identificatorProvider.GetNextId(),
+                    Id = identificationService.GetNextId<TId>(),
                     EntityId = (TId)primaryObjIdPropertyValue!,
                     PropertyPath = property.Name,
                     OldValue = primaryObjPropertyValue?.ToString(),
@@ -261,7 +261,7 @@ public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorPr
 
             var newDifference = new Difference<TId>
             {
-                Id = identificatorProvider.GetNextId(),
+                Id = identificationService.GetNextId<TId>(),
                 EntityId = (TId)primaryObjIdPropertyValue!,
                 PropertyPath = property.Name,
                 OldValue = null,
@@ -306,7 +306,7 @@ public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorPr
                     if (elemType == null)
                         continue;
 
-                    var elemIdProperty = elemType.FindIdPropertyAndThrow();
+                    var elemIdProperty = identificationService.FindIdPropertyAndThrow(elemType);
                     
                     var (elemToAdd, elemToRemove, elemToChange) = GetElems(primaryObjListValue, secondaryObjListValue , elemIdProperty);
                     
@@ -383,13 +383,13 @@ public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorPr
         var result = new List<Difference<TId>>();
 
         var typeOfObject = source.GetType();
-        var idProperty = typeOfObject.FindIdPropertyAndThrow();
+        var idProperty = identificationService.FindIdPropertyAndThrow(typeOfObject);
         var id = idProperty.GetValue(source);
 
         // Отдельно добавляем Id
         result.Add(new Difference<TId>
         {
-            Id = identificatorProvider.GetNextId(),
+            Id = identificationService.GetNextId<TId>(),
             EntityId = default!,
             PropertyPath = idProperty.Name,
             OldValue = default(TId)?.ToString(),
@@ -407,7 +407,7 @@ public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorPr
             {
                 var dif = new Difference<TId>()
                 {
-                    Id = identificatorProvider.GetNextId(),
+                    Id = identificationService.GetNextId<TId>(),
                     EntityId = (TId)id!,
                     PropertyPath = property.Name,
                     OldValue = null,
@@ -429,7 +429,7 @@ public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorPr
                 
                 var enumerableDif = new Difference<TId>()
                 {
-                    Id = identificatorProvider.GetNextId(),
+                    Id = identificationService.GetNextId<TId>(),
                     EntityId = (TId)id!,
                     PropertyPath = property.Name,
                     OldValue = null,
@@ -447,7 +447,7 @@ public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorPr
             
             var nestedDif = new Difference<TId>()
             {
-                Id = identificatorProvider.GetNextId(),
+                Id = identificationService.GetNextId<TId>(),
                 EntityId = (TId)id!,
                 PropertyPath = property.Name,
                 OldValue = null,
@@ -466,7 +466,7 @@ public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorPr
         var result = new List<Difference<TId>>();
 
         var typeOfObject = source.GetType();
-        var idProperty = typeOfObject.FindIdPropertyAndThrow();
+        var idProperty = identificationService.FindIdPropertyAndThrow(typeOfObject);
         var id = idProperty.GetValue(source);
 
         foreach (var property in typeOfObject.GetProperties().Where(s => s.Name != idProperty.Name))
@@ -479,7 +479,7 @@ public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorPr
             {
                 var dif = new Difference<TId>()
                 {
-                    Id = identificatorProvider.GetNextId(),
+                    Id = identificationService.GetNextId<TId>(),
                     EntityId = (TId)id!,
                     PropertyPath = property.Name,
                     OldValue = propertyValue?.ToString(),
@@ -501,7 +501,7 @@ public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorPr
                 
                 var enumerableDif = new Difference<TId>()
                 {
-                    Id = identificatorProvider.GetNextId(),
+                    Id = identificationService.GetNextId<TId>(),
                     EntityId = (TId)id!,
                     PropertyPath = property.Name,
                     OldValue = null,
@@ -517,7 +517,7 @@ public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorPr
             
             var nestedDif = new Difference<TId>()
             {
-                Id = identificatorProvider.GetNextId(),
+                Id = identificationService.GetNextId<TId>(),
                 EntityId = (TId)id!,
                 PropertyPath = property.Name,
                 OldValue = null,
@@ -531,7 +531,7 @@ public class DifferencesService<TId>(IIdentificatorProvider<TId> identificatorPr
         // Отдельно добавляем Id
         result.Add(new Difference<TId>
         {
-            Id = identificatorProvider.GetNextId(),
+            Id = identificationService.GetNextId<TId>(),
             EntityId = (TId)id!,
             PropertyPath = idProperty.Name,
             OldValue = id?.ToString(),
