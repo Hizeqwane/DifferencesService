@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using DifferencesService.Interfaces;
+using DifferencesService.Models;
 using DifferencesService.Options;
 
 namespace DifferencesService.Modules;
@@ -8,11 +9,11 @@ public class IdentificationService : IIdentificationService
 {
     private readonly string _defaultIdentificationPropertyName;
     private readonly Dictionary<Type, string> _identificationIdPropertyNameMap = new();
-    private readonly Dictionary<Type, IIdentificationProvider> _identificationProvidersMap = new();
+    private readonly IIdentificationProvider _identificationProvider;
 
     public IdentificationService(DifferenceServiceOptions options)
     {
-        _identificationProvidersMap = options.IdentificationProvidersMap;
+        _identificationProvider = options.IdentificationProvider ?? DifferenceServiceOptions.DefaultIdentificationProvider;
         _identificationIdPropertyNameMap = options.IdentificationIdPropertyNameMap;
         _defaultIdentificationPropertyName = options.DefaultIdPropertyName;
     }
@@ -24,26 +25,14 @@ public class IdentificationService : IIdentificationService
         properties ??= typeOfObject.GetProperties();
         var idProperty = properties.FirstOrDefault(s => s.Name == GetIdPropertyName(typeOfObject));
         if (idProperty == null)
-            throw new InvalidDataException($"Идентификационное свойство {GetIdPropertyName(typeOfObject)} не найдено для объекта типа {typeOfObject.FullName}.");
+            throw new IdPropertyNotFoundException($"Идентификационное свойство {GetIdPropertyName(typeOfObject)} не найдено для объекта типа {typeOfObject.FullName}.");
         
         return idProperty;
     }
     
-    public TId GetNextId<TId>()
-    {
-        if (!_identificationProvidersMap.TryGetValue(typeof(TId), out var foundedProvider))
-            throw new ArgumentException($"Для типа {typeof(TId)} не зарегистрирован {nameof(IIdentificationProvider)}.");
+    public object GetNextId() => _identificationProvider.GetNextObjectId();
 
-        return (TId)foundedProvider.GetNextObjectId();
-    }
-
-    public void Flush<TId>()
-    {
-        if (!_identificationProvidersMap.TryGetValue(typeof(TId), out var foundedProvider))
-            throw new ArgumentException($"Для типа {typeof(TId)} не зарегистрирован {nameof(IIdentificationProvider)}.");
-
-        foundedProvider.Flush();
-    }
+    public void Flush() => _identificationProvider.Flush();
 
     public string GetIdPropertyName(Type objType) =>
         _identificationIdPropertyNameMap.FirstOrDefault(s => s.Key == objType).Value ??

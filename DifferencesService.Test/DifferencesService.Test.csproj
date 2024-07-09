@@ -37,56 +37,20 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="TestData\DifferencesApplier\" />
-    </ItemGroup>
-
-    <ItemGroup>
       <None Remove="TestData\DifferencesApplier\intId\ProductsRightAnswer.json" />
-      <Content Include="TestData\DifferencesApplier\intId\ProductsRightAnswer.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
       <None Remove="TestData\DifferencesApplier\intId\Products.json" />
-      <Content Include="TestData\DifferencesApplier\intId\Products.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
       <None Remove="TestData\DifferencesApplier\intId\DifferenceToApply.json" />
-      <Content Include="TestData\DifferencesApplier\intId\DifferenceToApply.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
       <None Remove="TestData\DifferencesApplier\GuidId\DifferenceToApply.json" />
-      <Content Include="TestData\DifferencesApplier\GuidId\DifferenceToApply.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
       <None Remove="TestData\DifferencesApplier\GuidId\Products.json" />
-      <Content Include="TestData\DifferencesApplier\GuidId\Products.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
       <None Remove="TestData\DifferencesApplier\GuidId\ProductsRightAnswer.json" />
-      <Content Include="TestData\DifferencesApplier\GuidId\ProductsRightAnswer.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
       <None Remove="TestData\GetDifferences\IntId\Products.json" />
-      <Content Include="TestData\GetDifferences\IntId\Products.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
       <None Remove="TestData\GetDifferences\IntId\DifferenceRightAnswer.json" />
-      <Content Include="TestData\GetDifferences\IntId\DifferenceRightAnswer.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
       <None Remove="TestData\DifferencesApplier\intId\DifferencesAfterProvider.json" />
-      <Content Include="TestData\DifferencesApplier\intId\DifferencesAfterProvider.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
       <None Remove="TestData\GetDifferences\GuidId\Products.json" />
-      <Content Include="TestData\GetDifferences\GuidId\Products.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
       <None Remove="TestData\DifferencesApplier\GuidId\DifferencesAfterProvider.json" />
-      <Content Include="TestData\DifferencesApplier\GuidId\DifferencesAfterProvider.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
       <None Remove="TestData\GetDifferences\GuidId\DifferenceRightAnswer.json" />
-      <Content Include="TestData\GetDifferences\GuidId\DifferenceRightAnswer.json">
+      <None Remove="TestData\CompetitorProducts\CompetitorProducts.json" />
+      <Content Update="TestData\DifferenceObjectProvider\Products.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>

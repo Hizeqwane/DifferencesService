@@ -27,11 +27,11 @@ public static class ServiceExtensions
     {
         var options = setup(new DifferenceServiceOptions());
         
-        if (options.IdentificationProvidersMap.Count == 0) 
+        if (options.IdentificationProvider == null) 
             options.SetDefaultIdentificationProvider();
         
         services.AddScoped<DifferenceServiceOptions>(_ => options);
-        services.AddScoped<IDifferenceService<TId>, DifferencesService<TId>>();
+        services.AddScoped<IDifferenceHandler, DifferencesHandler>();
         services.AddScoped<IIdentificationService, IdentificationService>();
 
         return services;

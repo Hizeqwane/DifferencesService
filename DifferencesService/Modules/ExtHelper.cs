@@ -5,23 +5,55 @@ namespace DifferencesService.Modules;
 
 public static class ExtHelper
 {
-    public static bool IsEqualsFromToString(this object? primaryObjId, object? secondaryObjId)
-    {
-        if (primaryObjId == null)
-            throw new ArgumentException("Идентификационно свойство для сравнения не может быть равно null.");
-        
-        return primaryObjId.ToString() == secondaryObjId?.ToString();
-    }
-    
+    public static bool IsEqualsFromToString(this object? primaryObjId, object? secondaryObjId) => 
+        primaryObjId?.ToString() == secondaryObjId?.ToString();
+
     public static bool IsSimple(this Type type) =>
         TypeDescriptor.GetConverter(type).CanConvertFrom(typeof(string));
     
-    public static object? GetInstance(this Type propertyPropertyType)
+    public static object? GetInstance(this Type propertyType)
     {
-        var ctorWithoutParameters = propertyPropertyType.GetConstructors()?.FirstOrDefault(s => s.GetParameters()?.Any() != true);
+        var ctorWithoutParameters = propertyType.GetConstructors()?.FirstOrDefault(s => s.GetParameters()?.Any() != true);
         if (ctorWithoutParameters == null)
-            throw new ArgumentException($"Тип {propertyPropertyType.FullName} должен иметь конструктор без параметров.");
+            throw new ArgumentException($"Тип {propertyType.FullName} должен иметь конструктор без параметров.");
         
         return ctorWithoutParameters?.Invoke(null);
+    }
+
+    public static object? ChangeType(this object? value, Type? type) =>
+        type == null
+        ? null 
+        : value == null
+            ? value
+            : type == typeof(Guid)
+                ? Guid.Parse(value?.ToString() ?? Guid.Empty.ToString())
+                : (type == typeof(DateTime?) && value != null) 
+                    ? Convert.ChangeType(value.ToString(), typeof(DateTime))
+                    : Convert.ChangeType(value?.ToString(), type);
+
+    private static string BeginList = "[[";
+    private static string EndList = "]]";
+    private static string SepList = "||";
+    
+    public static string? GetArrayStrValue(this IEnumerable<object>? list) =>
+        list != null
+            ? $"{BeginList}{string.Join(SepList, list)}{EndList}"
+            : null;
+
+    public static IEnumerable<object>? GetArrayFromStrValue(this string arrayStrValue) =>
+        arrayStrValue[BeginList.Length..^EndList.Length]
+            .Split(SepList);
+
+    public static void RemoveRangeByIds(this List<object>? valueList, IEnumerable<object> idList, PropertyInfo idProperty)
+    {
+        if (valueList?.Any() != true)
+            return;
+
+        foreach (var idToRemove in idList)
+        {
+            var founded = valueList.FirstOrDefault(s => idProperty.GetValue(s).IsEqualsFromToString(idToRemove));
+            if (founded != null)
+                valueList.Remove(founded);
+        }
     }
 }
