@@ -93,6 +93,34 @@ public class Test_09_07_2024
         
         ClassicAssert.True(true);
     }
+    
+    [Test(Description = "Тест получение объекта с изменениями")]
+    public void TestRemove_TestGetObjectWithDifferences()
+    {
+        var p2 = GetEmptyProduct();
+        var p1 = GetFullProduct();
+
+        var diff = _differenceHandler.GetDifferences(p1, p2);
+
+        var fromP1WithDifferences = _differenceObjectProvider.GetObjectWithDifferences(p1, diff);
+        
+        
+        ClassicAssert.True(true);
+    }
+    
+    [Test(Description = "Тест получение объекта с изменениями")]
+    public void TestChange_TestGetObjectWithDifferences()
+    {
+        var p1 = GetFullProduct();
+        var p2 = GetOtherFullProduct();
+
+        var diff = _differenceHandler.GetDifferences(p1, p2);
+
+        var fromP1WithDifferences = _differenceObjectProvider.GetObjectWithDifferences(p1, diff);
+        
+        
+        ClassicAssert.True(true);
+    }
 
     #region GetProducts
 

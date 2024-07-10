@@ -8,9 +8,9 @@ public class Difference
 
     public string? PropertyPath { get; set; }
         
-    public string? OldValue { get; set; }
+    public object? OldValue { get; set; }
         
-    public string? NewValue { get; set; }
+    public object? NewValue { get; set; }
     
     public List<Difference>? Childs { get; set; }
 }

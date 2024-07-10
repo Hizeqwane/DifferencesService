@@ -37,40 +37,22 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
 
             var propertyValue = GetPropertyValue(property, obj, difference);
             // Внутри GetPropertyValue уже установили значение
-            if (property.PropertyType.IsArray)
+            if (property.PropertyType.IsSimple() || property.PropertyType.IsArray)
                 continue;
             
+            // Обрабатываем сложные объекты
+            
+            // Попытка получить список
             var valueList = (propertyValue as IEnumerable)?
                 .OfType<object>()
                 .ToList();
-            
-            // Если нет дочерних изменений - изменяем текущее свойство
-            // Значит изменяем простой объект или массив
-            if (difference.Childs == null)
-            {
-                if (!property.PropertyType.IsSimple())
-                    throw new ArgumentException($"Попытка установить свойство-сложный объект через изменение без дочерних элементов.");
-                
-                // Простое свойство
-                
-                // Сравниваем OldValue с текущим
-                // если не равны - не изменяем
-                if (!difference.OldValue.IsEqualsFromToString(propertyValue))
-                    continue;
-                
-                property.SetValue(obj, difference.NewValue.ChangeType(property.PropertyType));
-                    
-                continue;   
-            }
-
-            // Обрабатываем сложные свойства
             
             // Свойство - не список
             if (valueList == null)
             {
                 // Если было найдено дочернее изменение Id на default - удаляем свойство
-                if (difference.Childs.Any(s => s.PropertyPath == identificationService.GetIdPropertyName(property.PropertyType) &&
-                                               s.NewValue == null))
+                if (difference.Childs?.Any(s => s.PropertyPath == identificationService.GetIdPropertyName(property.PropertyType) &&
+                                               s.NewValue == null) != false)
                 {
                     property.SetValue(obj, null);
                     continue;
@@ -91,7 +73,8 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
 
     /// <summary>
     /// Получаем значение свойства.
-    /// Если свойство - сложный объект и равно null - устанавливаем его
+    /// Если свойство - сложный объект и равно null - инициализируем
+    /// Если массив или простое свойство - устанавливает его
     /// </summary>
     /// <param name="property"></param>
     /// <param name="obj"></param>
@@ -104,13 +87,20 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
 
         // Если свойство примитивное - возвращаем что есть
         if (property.PropertyType.IsSimple())
+        {
+            // Сравниваем OldValue с текущим
+            // если не равны - не изменяем
+            if (difference.OldValue.IsEqualsFromToString(propertyValue))
+                property.SetValue(obj, difference.NewValue.ChangeType(property.PropertyType));
+            
             return propertyValue;
+        }
         
         // Свойство - массив И текущее значение null
         if (property.PropertyType.IsArray)
         {
             // Проверка на OldValue == currentValue
-            if (difference.OldValue != 
+            if ((difference.OldValue as IEnumerable)?.OfType<object>().GetArrayStrValue() != 
                 ((propertyValue as IEnumerable)?.OfType<object>().GetArrayStrValue() ??
                 null))
                 return propertyValue;
@@ -125,8 +115,8 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
             // Собираем новый массив
             var elemType = property.PropertyType.GetElementType();
             
-            var newValueArray = difference.NewValue!
-                .GetArrayFromStrValue()!
+            var newValueArray = (difference.NewValue! as IEnumerable)!
+                .OfType<object>()
                 .Select(s => Convert.ChangeType(s, elemType!))
                 .ToList();
                     
@@ -369,8 +359,8 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
                     if (elemType.IsSimple())
                     {
                         newDifference.Childs = null;
-                        newDifference.OldValue = primaryList.GetArrayStrValue();
-                        newDifference.NewValue = secondaryList.GetArrayStrValue();
+                        newDifference.OldValue = primaryList;
+                        newDifference.NewValue = secondaryList;
                         
                         differencesList.Add(newDifference);
                         continue;

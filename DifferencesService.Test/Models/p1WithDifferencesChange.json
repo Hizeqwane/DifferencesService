@@ -1,0 +1,110 @@
+{
+  "Id": 1,
+  "SomeValues": {
+    "Value": [
+      111,
+      333
+    ],
+    "OldValue": [
+      111,
+      222
+    ],
+    "Type": "Change"
+  },
+  "Name": {
+    "Value": "Имя продукта - другое",
+    "OldValue": "Имя продукта",
+    "Type": "Change"
+  },
+  "License": {
+    "Id": 11,
+    "Name": {
+      "Value": "Имя лицензии - поменяли",
+      "OldValue": "Имя лицензии",
+      "Type": "Change"
+    }
+  },
+  "Documents": {
+    "Value": [
+      null,
+      {
+        "Value": null,
+        "OldValue": {
+          "Id": 101,
+          "Name": {
+            "Value": null,
+            "OldValue": "Имя документа",
+            "Type": "Remove"
+          },
+          "Attachments": {
+            "Value": null,
+            "OldValue": [
+              {
+                "Value": null,
+                "OldValue": {
+                  "Id": 1011,
+                  "Name": {
+                    "Value": null,
+                    "OldValue": "Имя attachment",
+                    "Type": "Remove"
+                  }
+                },
+                "Type": "Remove"
+              },
+              {
+                "Value": null,
+                "OldValue": {
+                  "Id": 1012,
+                  "Name": {
+                    "Value": null,
+                    "OldValue": "Имя attachment",
+                    "Type": "Remove"
+                  }
+                },
+                "Type": "Remove"
+              }
+            ],
+            "Type": "Remove"
+          }
+        },
+        "Type": "Remove"
+      },
+      {
+        "Id": 102,
+        "Name": {
+          "Value": "Имя документа",
+          "OldValue": null,
+          "Type": "Add"
+        },
+        "Attachments": [
+          {
+            "Value": {
+              "Id": 1021,
+              "Name": {
+                "Value": "Имя attachment",
+                "OldValue": null,
+                "Type": "Add"
+              }
+            },
+            "OldValue": null,
+            "Type": "Add"
+          },
+          {
+            "Value": {
+              "Id": 1022,
+              "Name": {
+                "Value": "Имя attachment",
+                "OldValue": null,
+                "Type": "Add"
+              }
+            },
+            "OldValue": null,
+            "Type": "Add"
+          }
+        ]
+      }
+    ],
+    "OldValue": null,
+    "Type": "Change"
+  }
+}

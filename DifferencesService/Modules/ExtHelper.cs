@@ -37,18 +37,10 @@ public static class ExtHelper
                     ? Convert.ChangeType(value.ToString(), typeof(DateTime))
                     : Convert.ChangeType(value?.ToString(), type);
 
-    private static string BeginList = "[[";
-    private static string EndList = "]]";
-    private static string SepList = "||";
-    
     public static string? GetArrayStrValue(this IEnumerable<object>? list) =>
         list != null
-            ? $"{BeginList}{string.Join(SepList, list)}{EndList}"
+            ? string.Join("||", list)
             : null;
-
-    public static IEnumerable<object>? GetArrayFromStrValue(this string arrayStrValue) =>
-        arrayStrValue[BeginList.Length..^EndList.Length]
-            .Split(SepList);
 
     public static void RemoveRangeByIds(this List<object>? valueList, IEnumerable<object> idList, PropertyInfo idProperty)
     {
