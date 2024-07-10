@@ -20,6 +20,12 @@ public static class ExtHelper
         return ctorWithoutParameters?.Invoke(null);
     }
 
+    /// <summary>
+    /// Меняет типы для примитивных типов + расширение для Guid и DateTime?
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="type"></param>
+    /// <returns></returns>
     public static object? ChangeType(this object? value, Type? type) =>
         type == null
         ? null 

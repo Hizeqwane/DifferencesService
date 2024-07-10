@@ -1,9 +1,8 @@
 ﻿using System.Collections;
-using System.Net.Mail;
 using System.Reflection;
 using DifferencesService.Interfaces;
 using DifferencesService.Models;
-using Newtonsoft.Json;
+using DifferencesService.Options;
 using Newtonsoft.Json.Linq;
 
 namespace DifferencesService.Modules;
@@ -13,21 +12,24 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
     private readonly IIdentificationService _identificationService;
     private readonly IDifferenceHandler _differenceHandler;
 
+    private readonly bool _getEmptyProperties;
+    
     public DifferenceObjectProvider(
         IIdentificationService identificationService,
-        IDifferenceHandler differenceHandler)
+        IDifferenceHandler differenceHandler,
+        DifferenceServiceOptions options)
     {
         _identificationService = identificationService;
         _differenceHandler = differenceHandler;
+        _getEmptyProperties = options.GetEmptyProperties;
     }
 
-    public JToken? GetObjectWithDifferences(object source, IEnumerable<Difference> differences, bool getEmptyProperties = true) => 
-        GetObjectWithDifferencesInternal(source, differences, getEmptyProperties);
+    public JToken? GetObjectWithDifferences(object source, IEnumerable<Difference> differences) => 
+        GetObjectWithDifferencesInternal(source, differences);
 
     private JToken? GetObjectWithDifferencesInternal(
         object? source,
-        IEnumerable<Difference> differences,
-        bool getEmptyProperties)
+        IEnumerable<Difference> differences)
     {
         if (source == null)
             return null;
@@ -40,12 +42,14 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
         if (typeOfObject.IsSimple())
             return SimpleTreatment(source, allDifferencesList.FirstOrDefault());
         
+        // Создаём объект, который будем собирать
         var jObject = new JObject();
         
         var properties = typeOfObject.GetProperties();
         var idProperty = _identificationService.FindIdPropertyAndThrow(typeOfObject);
         var sourceId = idProperty.GetValue(source);
 
+        // Идентификационное свойство добавляем как есть
         jObject[idProperty.Name] = JToken.FromObject(sourceId!);
         
         var differencesList = allDifferencesList
@@ -75,7 +79,7 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
                 if (property.PropertyType.IsSimple())
                 {
                     var value = property.GetValue(source) ?? property.GetValue(objAfterDifferences);
-                    if (getEmptyProperties || value != null)
+                    if (_getEmptyProperties || value != null)
                         jObject[property.Name] = SimpleTreatment(value, null);
                 }
                 else
@@ -85,8 +89,7 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
                         (
                             jObject,
                             property,
-                            GetObjectWithDifferencesInternal(property.GetValue(source), Enumerable.Empty<Difference>(), getEmptyProperties),
-                            getEmptyProperties: getEmptyProperties
+                            GetObjectWithDifferencesInternal(property.GetValue(source), Enumerable.Empty<Difference>())
                         );
                     else
                     {
@@ -96,10 +99,10 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
                         {
                             var idElemValue = idElemProperty!.GetValue(propertyEnumValue);
                             
-                            jArrayWithoutDifferences.Add(GetObjectWithDifferencesInternal(propertyEnumValue, differencesList.Where(s => s.EntityId.IsEqualsFromToString(idElemValue)), getEmptyProperties)!);
+                            jArrayWithoutDifferences.Add(GetObjectWithDifferencesInternal(propertyEnumValue, differencesList.Where(s => s.EntityId.IsEqualsFromToString(idElemValue)))!);
                         }
                         
-                        AppendToJObj(jObject, property, jArrayWithoutDifferences, getEmptyProperties: getEmptyProperties);
+                        AppendToJObj(jObject, property, jArrayWithoutDifferences);
                     }
                 }
 
@@ -120,7 +123,7 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
             // Объект не является колекцией
             if (propertyEnumValues == null)
             {
-                SingleElemTreatment(property, foundedDifference, jObject, propertyValue, getEmptyProperties);
+                SingleElemTreatment(property, foundedDifference, jObject, propertyValue);
                 continue;
             }
             
@@ -138,8 +141,7 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
                         GetObjectWithDifferencesInternal
                         (
                             propertyEnumValue,
-                            foundedDifference.Childs!.Where(s => s.EntityId.IsEqualsFromToString(idElemValue)),
-                            getEmptyProperties
+                            foundedDifference.Childs!.Where(s => s.EntityId.IsEqualsFromToString(idElemValue))
                         )!
                     );
                 }
@@ -151,8 +153,7 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
                     jArrayWithoutDifferences,
                     type: isAdd
                         ? DifferenceType.Add
-                        : DifferenceType.Remove,
-                    getEmptyProperties: getEmptyProperties
+                        : DifferenceType.Remove
                 );
                 
                 continue;
@@ -182,7 +183,7 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
                 {
                     jArray.Add(GetSimpleValue
                         (
-                            oldValue: GetObjectWithDifferencesInternal(sourceElem, foundedDifference.Childs!, getEmptyProperties),
+                            oldValue: GetObjectWithDifferencesInternal(sourceElem, foundedDifference.Childs!),
                             type: DifferenceType.Remove
                         )!
                     );
@@ -197,7 +198,7 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
                 // Элемент изменился
                 jArray.Add(GetSimpleValue
                     (
-                        value: GetObjectWithDifferencesInternal(sourceElem, childDifferences, getEmptyProperties),
+                        value: GetObjectWithDifferencesInternal(sourceElem, childDifferences),
                         type: childDifferences.Count > 0
                             ? DifferenceType.Change
                             : DifferenceType.None
@@ -220,20 +221,20 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
                 
                 jArray.Add(GetSimpleValue
                     (
-                        value: GetObjectWithDifferencesInternal(elemEmptyInstance, childDifferences, getEmptyProperties),
+                        value: GetObjectWithDifferencesInternal(elemEmptyInstance, childDifferences),
                         type: DifferenceType.Add
                     )!
                 );
             }
             
-            AppendToJObj(jObject, property, jArray, type: DifferenceType.Change, getEmptyProperties: getEmptyProperties);
+            AppendToJObj(jObject, property, jArray, type: DifferenceType.Change);
         }
         
         return jObject;
     }
 
     private void SingleElemTreatment(PropertyInfo property, Difference foundedDifference, JObject jObject, 
-        object? propertyValue, bool getEmptyProperties)
+        object? propertyValue)
     {
         var childObjectIdPropertyName = _identificationService.GetIdPropertyName(property.PropertyType);
         var childObjectIdProperty = _identificationService.FindIdPropertyAndThrow(property.PropertyType);
@@ -250,9 +251,8 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
                 (
                     jObject,
                     property,
-                    value: GetObjectWithDifferencesInternal(propertyValue, foundedDifference.Childs!, getEmptyProperties),
-                    type: DifferenceType.Add,
-                    getEmptyProperties: getEmptyProperties
+                    value: GetObjectWithDifferencesInternal(propertyValue, foundedDifference.Childs!),
+                    type: DifferenceType.Add
                 );
             }
             // удаление
@@ -262,9 +262,8 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
                 (
                     jObject,
                     property,
-                    oldValue: GetObjectWithDifferencesInternal(propertyValue, foundedDifference.Childs!, getEmptyProperties),
-                    type: DifferenceType.Remove,
-                    getEmptyProperties: getEmptyProperties
+                    oldValue: GetObjectWithDifferencesInternal(propertyValue, foundedDifference.Childs!),
+                    type: DifferenceType.Remove
                 );
             }
                     
@@ -276,9 +275,8 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
         (
             jObject,
             property,
-            value: GetObjectWithDifferencesInternal(propertyValue, foundedDifference.Childs!, getEmptyProperties),
-            type: DifferenceType.Change,
-            getEmptyProperties: getEmptyProperties
+            value: GetObjectWithDifferencesInternal(propertyValue, foundedDifference.Childs!),
+            type: DifferenceType.Change
         );
     }
 
@@ -291,18 +289,18 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
                     ? DifferenceType.Change
                     : DifferenceType.None;
 
-    private static JToken? SimpleTreatment(object? source, Difference? difference)
+    private JToken? SimpleTreatment(object? source, Difference? difference)
     {
         // Нет изменений - значение null
         if (source == null)
             return GetSimpleValue();
         
-        var type = source?.GetType();
+        var type = source.GetType();
         
         // Нет изменений
         if (difference == null || 
             (difference.NewValue == null && difference.OldValue == null))
-            return GetSimpleValue(source.ChangeType(type));
+            return GetSimpleValue(source);
             
         // Создание
         if (difference.OldValue == null)
@@ -321,20 +319,23 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
         );
     }
 
-    private static JToken? GetSimpleValue(object? value = null, object? oldValue = null, string type = DifferenceType.None)
+    private JToken? GetSimpleValue(object? value = null, object? oldValue = null, string type = DifferenceType.None)
     {
+        if (!_getEmptyProperties && value == null && oldValue == null)
+            return null;
+        
         var differenceValue = new DifferenceValue
         {
             Value = value,
             OldValue = oldValue,
             Type = type
         };
-
+        
         return JToken.FromObject(differenceValue);
     }
 
-    private static void AppendToJObj(JObject jObject, PropertyInfo property, object? value = null,
-        object? oldValue = null, string type = DifferenceType.None, bool getEmptyProperties = true)
+    private void AppendToJObj(JObject jObject, PropertyInfo property, object? value = null,
+        object? oldValue = null, string type = DifferenceType.None)
     {
         var differenceValueNone = new DifferenceValue
         {
@@ -343,7 +344,7 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
             Type = type
         };
 
-        if (getEmptyProperties || (differenceValueNone.Value != null || differenceValueNone.OldValue != null))
+        if (_getEmptyProperties || (differenceValueNone.Value != null || differenceValueNone.OldValue != null))
             jObject[property.Name] = differenceValueNone.GetToken();
     }
 }

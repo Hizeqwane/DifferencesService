@@ -33,6 +33,7 @@ public static class ServiceExtensions
         services.AddScoped<DifferenceServiceOptions>(_ => options);
         services.AddScoped<IDifferenceHandler, DifferencesHandler>();
         services.AddScoped<IIdentificationService, IdentificationService>();
+        services.AddScoped<IDifferenceObjectProvider, DifferenceObjectProvider>();
 
         return services;
     }

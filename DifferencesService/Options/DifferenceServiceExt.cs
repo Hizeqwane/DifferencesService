@@ -28,4 +28,12 @@ public static class DifferenceServiceExt
         
         return options;
     }
+
+    public static DifferenceServiceOptions WithEmptyPropertiesBehaviour(this DifferenceServiceOptions options,
+        bool getEmptyProperties)
+    {
+        options.SetEmptyPropertiesBehaviour(getEmptyProperties);
+        
+        return options;
+    }
 }

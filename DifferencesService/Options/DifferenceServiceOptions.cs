@@ -17,4 +17,8 @@ public class DifferenceServiceOptions
     
     public void SetDefaultIdentificationProvider() =>
         IdentificationProvider = DefaultIdentificationProvider;
+
+    public bool GetEmptyProperties { get; private set; } = true;
+
+    public void SetEmptyPropertiesBehaviour(bool value) => GetEmptyProperties = value;
 }

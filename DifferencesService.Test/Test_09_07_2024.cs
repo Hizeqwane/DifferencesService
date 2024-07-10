@@ -23,11 +23,12 @@ public class Test_09_07_2024
         _jsonDiffPatch = new JsonDiffPatch();
         
         var options = new DifferenceServiceOptions()
-            .WithDefaultIdPropertyName("Id");
+            .WithDefaultIdPropertyName("Id")
+            .WithEmptyPropertiesBehaviour(false);
         
         _identificationService = new IdentificationService(options);
         _differenceHandler = new DifferencesHandler(_identificationService);
-        _differenceObjectProvider = new DifferenceObjectProvider(_identificationService, _differenceHandler);
+        _differenceObjectProvider = new DifferenceObjectProvider(_identificationService, _differenceHandler, options);
     }
     
     [Test(Description = "Тест добавления")]
