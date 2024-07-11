@@ -3,14 +3,22 @@
   "SomeValues": {
     "Value": null,
     "OldValue": [
-      111,
-      222
+      {
+        "Value": null,
+        "OldValue": 111,
+        "Type": "Remove"
+      },
+      {
+        "Value": null,
+        "OldValue": 333,
+        "Type": "Remove"
+      }
     ],
     "Type": "Remove"
   },
   "Name": {
     "Value": null,
-    "OldValue": "Имя продукта",
+    "OldValue": "Имя продукта - другое",
     "Type": "Remove"
   },
   "License": {
@@ -19,7 +27,7 @@
       "Id": 11,
       "Name": {
         "Value": null,
-        "OldValue": "Имя лицензии",
+        "OldValue": "Имя лицензии - поменяли",
         "Type": "Remove"
       }
     },
@@ -34,7 +42,7 @@
           "Id": 101,
           "Name": {
             "Value": null,
-            "OldValue": "Имя документа",
+            "OldValue": "Имя документа - изменили",
             "Type": "Remove"
           },
           "Attachments": {
@@ -55,7 +63,7 @@
               {
                 "Value": null,
                 "OldValue": {
-                  "Id": 1012,
+                  "Id": 1013,
                   "Name": {
                     "Value": null,
                     "OldValue": "Имя attachment",
@@ -73,10 +81,10 @@
       {
         "Value": null,
         "OldValue": {
-          "Id": 102,
+          "Id": 103,
           "Name": {
             "Value": null,
-            "OldValue": "Имя документа",
+            "OldValue": "Имя документа - добавили",
             "Type": "Remove"
           },
           "Attachments": {
@@ -85,7 +93,7 @@
               {
                 "Value": null,
                 "OldValue": {
-                  "Id": 1021,
+                  "Id": 1031,
                   "Name": {
                     "Value": null,
                     "OldValue": "Имя attachment",
@@ -97,7 +105,7 @@
               {
                 "Value": null,
                 "OldValue": {
-                  "Id": 1022,
+                  "Id": 1032,
                   "Name": {
                     "Value": null,
                     "OldValue": "Имя attachment",
@@ -114,5 +122,25 @@
       }
     ],
     "Type": "Remove"
+  },
+  "CreatingDate": {
+    "Value": "01.01.0001 0:00:00",
+    "OldValue": "2024-07-11T12:14:44",
+    "Type": "Change"
+  },
+  "ModifiedDate": {
+    "Value": null,
+    "OldValue": null,
+    "Type": "None"
+  },
+  "CreatedBy": {
+    "Value": "00000000-0000-0000-0000-000000000000",
+    "OldValue": "317329de-8015-4615-968e-8bdb98687468",
+    "Type": "Change"
+  },
+  "ModifiedBy": {
+    "Value": null,
+    "OldValue": null,
+    "Type": "None"
   }
 }

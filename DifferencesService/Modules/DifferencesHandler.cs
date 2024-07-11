@@ -310,7 +310,7 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
                 
                 continue;
             }
-
+            
             var primaryList = (primaryObjPropertyValue as IEnumerable)?
                 .OfType<object>()
                 .ToList();
@@ -355,9 +355,13 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
                     if (elemType == null)
                         continue;
 
-                    // Коллекция состоит из примитивных типов
+                    // Коллекция состоит из примитивных типов - массив
                     if (elemType.IsSimple())
                     {
+                        // Массивы одинаковые
+                        if (primaryList.GetArrayStrValue() == secondaryList.GetArrayStrValue())
+                            continue;
+                        
                         newDifference.Childs = null;
                         newDifference.OldValue = primaryList;
                         newDifference.NewValue = secondaryList;

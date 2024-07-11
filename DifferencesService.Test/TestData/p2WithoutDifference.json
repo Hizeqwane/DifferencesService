@@ -1,0 +1,146 @@
+{
+  "Id": 1,
+  "SomeValues": {
+    "Value": [
+      {
+        "Value": 111,
+        "OldValue": null,
+        "Type": "None"
+      },
+      {
+        "Value": 222,
+        "OldValue": null,
+        "Type": "None"
+      }
+    ],
+    "OldValue": null,
+    "Type": "None"
+  },
+  "Name": {
+    "Value": "Имя продукта",
+    "OldValue": null,
+    "Type": "None"
+  },
+  "License": {
+    "Value": {
+      "Id": 11,
+      "Name": {
+        "Value": "Имя лицензии",
+        "OldValue": null,
+        "Type": "None"
+      }
+    },
+    "OldValue": null,
+    "Type": "None"
+  },
+  "Documents": {
+    "Value": [
+      {
+        "Value": {
+          "Id": 101,
+          "Name": {
+            "Value": "Имя документа",
+            "OldValue": null,
+            "Type": "None"
+          },
+          "Attachments": {
+            "Value": [
+              {
+                "Value": {
+                  "Id": 1011,
+                  "Name": {
+                    "Value": "Имя attachment",
+                    "OldValue": null,
+                    "Type": "None"
+                  }
+                },
+                "OldValue": null,
+                "Type": "None"
+              },
+              {
+                "Value": {
+                  "Id": 1012,
+                  "Name": {
+                    "Value": "Имя attachment",
+                    "OldValue": null,
+                    "Type": "None"
+                  }
+                },
+                "OldValue": null,
+                "Type": "None"
+              }
+            ],
+            "OldValue": null,
+            "Type": "None"
+          }
+        },
+        "OldValue": null,
+        "Type": "None"
+      },
+      {
+        "Value": {
+          "Id": 102,
+          "Name": {
+            "Value": "Имя документа",
+            "OldValue": null,
+            "Type": "None"
+          },
+          "Attachments": {
+            "Value": [
+              {
+                "Value": {
+                  "Id": 1021,
+                  "Name": {
+                    "Value": "Имя attachment",
+                    "OldValue": null,
+                    "Type": "None"
+                  }
+                },
+                "OldValue": null,
+                "Type": "None"
+              },
+              {
+                "Value": {
+                  "Id": 1022,
+                  "Name": {
+                    "Value": "Имя attachment",
+                    "OldValue": null,
+                    "Type": "None"
+                  }
+                },
+                "OldValue": null,
+                "Type": "None"
+              }
+            ],
+            "OldValue": null,
+            "Type": "None"
+          }
+        },
+        "OldValue": null,
+        "Type": "None"
+      }
+    ],
+    "OldValue": null,
+    "Type": "None"
+  },
+  "CreatingDate": {
+    "Value": "2024-07-11T12:14:44",
+    "OldValue": null,
+    "Type": "None"
+  },
+  "ModifiedDate": {
+    "Value": "2024-07-10T12:14:44",
+    "OldValue": null,
+    "Type": "None"
+  },
+  "CreatedBy": {
+    "Value": "d3d8d19d-0da3-4499-8999-df423dea804a",
+    "OldValue": null,
+    "Type": "None"
+  },
+  "ModifiedBy": {
+    "Value": "95c3ac7b-2e5a-4f77-9871-f70d9cf0c8a5",
+    "OldValue": null,
+    "Type": "None"
+  }
+}

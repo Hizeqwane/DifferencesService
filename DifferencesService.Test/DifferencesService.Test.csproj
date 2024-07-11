@@ -53,6 +53,45 @@
       <Content Update="TestData\DifferenceObjectProvider\Products.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
+      <None Remove="TestData\p1WithDifferenceAdd.json" />
+      <Content Include="TestData\p1ToP2WithDifference.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <None Remove="TestData\p1WithDifferenceRemove.json" />
+      <None Remove="TestData\p1WithDifferencesChange.json" />
+      <None Remove="TestData\p1WithEmptyDifferences.json" />
+      <None Remove="TestData\p1ToP3WithDifferenceAdd.json" />
+      <Content Include="TestData\p1ToP3WithDifference.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <None Remove="TestData\p2ToP1WithDifferenceRemove.json" />
+      <Content Include="TestData\p2ToP1WithDifference.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <None Remove="TestData\p3ToP1WithDifferenceRemove.json" />
+      <Content Include="TestData\p3ToP1WithDifference.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <None Remove="TestData\p3ToP2WithDifference.json" />
+      <Content Include="TestData\p3ToP2WithDifference.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <None Remove="TestData\p2ToP3WithDifference.json" />
+      <Content Include="TestData\p2ToP3WithDifference.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <None Remove="TestData\p1WithoutDifferences.json" />
+      <Content Include="TestData\p1WithoutDifference.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <None Remove="TestData\p2WithoutDifferences.json" />
+      <Content Include="TestData\p2WithoutDifference.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <None Remove="TestData\p3WithoutDifferences.json" />
+      <Content Include="TestData\p3WithoutDifference.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
 </Project>

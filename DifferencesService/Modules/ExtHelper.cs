@@ -9,7 +9,9 @@ public static class ExtHelper
         primaryObjId?.ToString() == secondaryObjId?.ToString();
 
     public static bool IsSimple(this Type type) =>
-        TypeDescriptor.GetConverter(type).CanConvertFrom(typeof(string));
+        TypeDescriptor.GetConverter(type).CanConvertFrom(typeof(string))
+        || type == typeof(DateTime?)
+        || type == typeof(Guid?);
     
     public static object? GetInstance(this Type propertyType)
     {
@@ -32,10 +34,12 @@ public static class ExtHelper
         : value == null
             ? value
             : type == typeof(Guid)
-                ? Guid.Parse(value?.ToString() ?? Guid.Empty.ToString())
-                : (type == typeof(DateTime?) && value != null) 
-                    ? Convert.ChangeType(value.ToString(), typeof(DateTime))
-                    : Convert.ChangeType(value?.ToString(), type);
+                ? Guid.Parse(value.ToString()!)
+                : type == typeof(Guid?)
+                    ? Guid.Parse(value.ToString()!)
+                    : type == typeof(DateTime?) 
+                        ? Convert.ChangeType(value.ToString(), typeof(DateTime))
+                        : Convert.ChangeType(value?.ToString(), type);
 
     public static string? GetArrayStrValue(this IEnumerable<object>? list) =>
         list != null

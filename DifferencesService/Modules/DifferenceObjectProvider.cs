@@ -7,22 +7,12 @@ using Newtonsoft.Json.Linq;
 
 namespace DifferencesService.Modules;
 
-public class DifferenceObjectProvider : IDifferenceObjectProvider
+public class DifferenceObjectProvider(
+    IIdentificationService identificationService,
+    DifferenceServiceOptions options)
+    : IDifferenceObjectProvider
 {
-    private readonly IIdentificationService _identificationService;
-    private readonly IDifferenceHandler _differenceHandler;
-
-    private readonly bool _getEmptyProperties;
-    
-    public DifferenceObjectProvider(
-        IIdentificationService identificationService,
-        IDifferenceHandler differenceHandler,
-        DifferenceServiceOptions options)
-    {
-        _identificationService = identificationService;
-        _differenceHandler = differenceHandler;
-        _getEmptyProperties = options.GetEmptyProperties;
-    }
+    private readonly bool _getEmptyProperties = options.GetEmptyProperties;
 
     public JToken? GetObjectWithDifferences(object? source, IEnumerable<Difference> differences) => 
         source == null
@@ -32,9 +22,9 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
     /// <summary>
     /// Получение JToken`а, содержащего изменения для всех конечных (вложенных примитивных) свойств 
     /// </summary>
-    /// <param name="source">не примитивный тип</param>
-    /// <param name="differences"></param>
-    /// <param name="sourceType"></param>
+    /// <param name="source">Объект без изменений</param>
+    /// <param name="differences">Изменения, которые требуется отобразить</param>
+    /// <param name="sourceType">Тип объекта</param>
     /// <returns></returns>
     private JToken? GetObjectWithDifferencesInternal(
         object? source,
@@ -52,6 +42,8 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
         var properties = sourceType.GetProperties();
         foreach (var property in properties.Where(s => s.Name != idProperty.Name))
         {
+            var isSimple = property.PropertyType.IsSimple();
+            
             // Получаем значение
             var sourcePropertyValue = source != null
                 ? property.GetValue(source)
@@ -61,7 +53,7 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
             var difference = differencesList?.FirstOrDefault(s => s.PropertyPath == property.Name);
             
             // свойство не меняется
-            if (difference == null)
+            if (difference == null || (isSimple && difference.NewValue.IsEqualsFromToString(difference.OldValue)))
             {
                 jObj[property.Name] = GetJObjWithoutDifferences(sourcePropertyValue);
                 
@@ -69,7 +61,7 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
             }
             
             // Текущее значение null - конструируем из differences
-            if (sourcePropertyValue == null)
+            if (sourcePropertyValue == null || (isSimple && difference is {NewValue: not null, OldValue: null}))
             {
                 jObj[property.Name] = GetCtorJObj(difference, property.PropertyType);
 
@@ -77,14 +69,16 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
             }
             
             var elemType = property.PropertyType.GenericTypeArguments.FirstOrDefault();
+            var isList = property.PropertyType.GetInterfaces().Contains(typeof(IList)) &&
+                         elemType != null;
             // Свойство - список
-            if (elemType != null)
+            if (isList)
             {
                 var sourcePropertyListValue = (sourcePropertyValue as IEnumerable)!
                     .OfType<object>()
                     .ToList();
-
-                var elemIdProperty = _identificationService.FindIdPropertyAndThrow(elemType);
+                
+                var elemIdProperty = identificationService.FindIdPropertyAndThrow(elemType!);
 
                 if (difference.Childs == null)
                     throw new ArgumentException($"Попытка изменить свойство {property.Name} без дочерних изменений.");
@@ -95,15 +89,15 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
                     .ToList();
                 
                 var removeList = new List<object>();
-                var changeDict = new Dictionary<object, object>();
+                var notRemovingDict = new Dictionary<object, object>();
                 foreach (var sourceValue in sourcePropertyListValue)
                 {
                     var sourceValueId = elemIdProperty.GetValue(sourceValue);
                     var foundedRemoveDifference = differencesToRemove.FirstOrDefault(s => s.EntityId.IsEqualsFromToString(sourceValueId));
-                    if (foundedRemoveDifference == null)
+                    if (foundedRemoveDifference != null)
                         removeList.Add(sourceValue);
                     else
-                        changeDict.Add(sourceValueId!, sourceValue);
+                        notRemovingDict.Add(sourceValueId!, sourceValue);
                 }
 
                 // Удалили все элементы
@@ -117,25 +111,44 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
 
                 var jArray = new JArray();
                 
-                var differencesToAdd = difference.Childs
+                var differencesIdsSet = difference.Childs
                     .Where(s => s.PropertyPath == elemIdProperty.Name &&
-                                s.OldValue == null);
+                                s.OldValue == null); 
                 
-                foreach (var addDif in differencesToAdd) 
-                    jArray.Add(GetCtorJObj(addDif, elemType)!);
+                foreach (var addDif in differencesIdsSet) 
+                    jArray.Add(
+                        GetSimpleAddValue(
+                            GetObjectWithDifferencesInternal(null,
+                                difference.Childs
+                                .Where(s =>
+                                    s.Id == addDif.Id ||
+                                    s.EntityId.IsEqualsFromToString(addDif.NewValue))
+                                .ToList(),
+                                elemType)
+                        )!);
                 
                 foreach (var remove in removeList) 
                     jArray.Add(GetDeCtorJObj(remove)!);
 
-                foreach (var change in changeDict)
+                foreach (var notRemoving in notRemovingDict)
                 {
+                    var notRemovingDifferences = difference.Childs
+                        .Where(s => s.EntityId.IsEqualsFromToString(notRemoving.Key))
+                        .ToList();
+                    
                     jArray.Add
                     (
-                        GetObjectWithDifferencesInternal
+                        GetSimpleValue
                         (
-                            change.Value,
-                            differencesList?.Where(s => s.EntityId.IsEqualsFromToString(change.Key)),
-                            elemType
+                            value: GetObjectWithDifferencesInternal
+                            (
+                                notRemoving.Value,
+                                notRemovingDifferences,
+                                elemType
+                            )!, 
+                            type: notRemovingDifferences.Count > 0
+                                    ? DifferenceType.Change
+                                    : DifferenceType.None
                         )!
                     );
                 }
@@ -150,7 +163,8 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
                 var removeDifference = difference.Childs?.FirstOrDefault(s => s.PropertyPath == idProperty.Name &&
                                                                               s.NewValue == null);
                 // Новое значение null
-                if (removeDifference != null)
+                // Нашли сброс Id ИЛИ для простого свойства установили null
+                if (removeDifference != null || (isSimple && difference.NewValue == null))
                 {
                     jObj[property.Name] = GetDeCtorJObj(sourcePropertyValue);
                     
@@ -172,7 +186,7 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
     private JToken? GetChangeJObj(object source, Difference difference, Type sourceType)
     {
         var isSimple = sourceType.IsSimple(); 
-        if (isSimple || sourceType.IsArray)
+        if (isSimple)
         {
             // Несовпадение OldValue и currentValue
             if ((isSimple && !difference.OldValue.IsEqualsFromToString(source)) ||
@@ -183,8 +197,51 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
 
             return GetSimpleValue(value: difference.NewValue, oldValue: source, type: DifferenceType.Change);
         }
+
+        // Обработка массивов
+        if (sourceType.IsArray)
+        {
+            var elemList = (source as IEnumerable)!
+                .OfType<object>()
+                .ToList();
+            
+            // Несовпадение OldValue и currentValue
+            if ((sourceType.IsArray &&
+                 elemList.GetArrayStrValue() != 
+                 (difference.OldValue as IEnumerable)?.OfType<object>().GetArrayStrValue()))
+                return GetSimpleValue(value: source);
+
+            var newValueList = (difference.NewValue as IEnumerable)?.OfType<object>().ToList();
+            var addList = newValueList?.Where(s => elemList.All(e => !e.IsEqualsFromToString(s)));
+            var removingList = newValueList != null 
+                ? elemList.Where(s => newValueList.All(n => !n.IsEqualsFromToString(s))).ToList()
+                : elemList;
+            
+            var noneList = elemList.Where(s => removingList.All(r => !r.IsEqualsFromToString(s)));
+            
+            var jArray = new JArray();
+            
+            if (addList != null)
+                foreach (var newValue in addList) 
+                    jArray.Add(GetSimpleAddValue(newValue)!);
+            
+            foreach (var removingValue in removingList) 
+                jArray.Add(GetSimpleRemoveValue(removingValue)!);
+            
+            foreach (var noneValue in noneList) 
+                jArray.Add(GetSimpleValue(noneValue)!);
+            
+            
+            return removingList.Count == elemList.Count
+                ? GetSimpleRemoveValue(jArray)
+                : GetSimpleValue(value: jArray, type: DifferenceType.Change);
+        }
         
-        return GetObjectWithDifferencesInternal(source, difference.Childs, sourceType);
+        return GetSimpleValue
+        (
+            value: GetObjectWithDifferencesInternal(source, difference.Childs, sourceType),
+            type: DifferenceType.Change
+        );
     }
     
     /// <summary>
@@ -192,7 +249,6 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
     /// </summary>
     /// <param name="sourceList"></param>
     /// <returns></returns>
-    /// <exception cref="NotImplementedException"></exception>
     private JToken? GetDeCtorJObj(List<object>? sourceList)
     {
         if (sourceList?.Any() != true)
@@ -210,7 +266,6 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
     /// </summary>
     /// <param name="source"></param>
     /// <returns></returns>
-    /// <exception cref="NotImplementedException"></exception>
     private JToken? GetDeCtorJObj(object? source)
     {
         if (source == null)
@@ -219,19 +274,21 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
         var objType = source.GetType();
         
         // Обработка простых типов
-        if (objType.IsSimple() || objType.IsArray)
+        if (objType.IsSimple())
             return GetSimpleRemoveValue(source);
-
-        // Если объект - коллекция
+        
+        // Если объект - список или массив
         var sourceListValue = (source as IEnumerable)?
             .OfType<object>()
             .ToList();
+        
+        // Обработка массивов и списков
         if (sourceListValue != null)
             return GetDeCtorJObj(sourceListValue);
         
         var (jObj, _, _) = GetJObjectWithDifferences(source, null, objType);
 
-        var idProperty = _identificationService.FindIdPropertyAndThrow(objType);
+        var idProperty = identificationService.FindIdPropertyAndThrow(objType);
         foreach (var property in objType.GetProperties().Where(s => s.Name != idProperty.Name)) 
             jObj[property.Name] = GetDeCtorJObj(property.GetValue(source));
         
@@ -247,8 +304,26 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
     private JToken? GetCtorJObj(Difference difference, Type objType)
     {
         // Обработка простых типов
-        if (objType.IsSimple() || objType.IsArray)
+        if (objType.IsSimple())
             return GetSimpleAddValue(difference.NewValue);
+        
+        // Обработка массивов
+        if (objType.IsArray)
+        {
+            var elemList = (difference.NewValue as IEnumerable)?
+                .OfType<object>()
+                .ToList();
+
+            if (elemList == null)
+                return null;
+            
+            var jArray = new JArray();
+            
+            foreach (var arrayElem in elemList)
+                jArray.Add(GetSimpleAddValue(arrayElem)!);
+
+            return jArray;
+        }
         
         if (difference.Childs == null)
             return null;
@@ -259,11 +334,11 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
             return GetSimpleAddValue(
                 GetObjectWithDifferencesInternal(null, difference.Childs, objType));
         
-        var idProperty = _identificationService.FindIdPropertyAndThrow(listElemType);
+        var idProperty = identificationService.FindIdPropertyAndThrow(listElemType);
 
         // Группируем difference.Childs по созданию каждого объекта
         var difGroupList = new List<List<Difference>>();
-        List<Difference> currentList = null;
+        List<Difference> currentList = null!;
         foreach (var dif in difference.Childs)
         {
             if (dif.PropertyPath == idProperty.Name && dif.NewValue != null)
@@ -299,19 +374,30 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
         var objType = source.GetType();
         
         // Обработка простых типов
-        if (objType.IsSimple() || objType.IsArray)
+        if (objType.IsSimple())
             return GetSimpleValueWithoutDifferences(source);
+        
+        // Сложный объект список
+        var elemList = (source as IEnumerable)?
+            .OfType<object>()
+            .ToList();
+        
+        // Обработка массивов
+        if (objType.IsArray)
+        {
+            var jArray = new JArray();
+
+            foreach (var arrayElem in elemList!) 
+                jArray.Add(GetSimpleValueWithoutDifferences(arrayElem)!);
+
+            return GetSimpleValueWithoutDifferences(jArray);
+        }
 
         var listElemType = objType.GenericTypeArguments.FirstOrDefault();
         // Сложный объект не список
         if (listElemType == null)
             return GetSimpleValueWithoutDifferences(
                 GetObjectWithDifferencesInternal(source, null, objType));
-
-        // Сложный объект список
-        var elemList = (source as IEnumerable)?
-            .OfType<object>()
-            .ToList();
 
         if (elemList == null)
             return null;
@@ -321,7 +407,7 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
             jListToken.Add(GetSimpleValueWithoutDifferences(
                 GetObjectWithDifferencesInternal(elem, null, listElemType))!);
         
-        return jListToken;
+        return GetSimpleValueWithoutDifferences(jListToken);
     }
 
     /// <summary>
@@ -337,7 +423,7 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
     private (JToken JObj, List<Difference>? DifferencesList, PropertyInfo IdProperty) GetJObjectWithDifferences(
         object? source, IEnumerable<Difference>? rawDifferences, Type sourceType)
     {
-        var idProperty = _identificationService.FindIdPropertyAndThrow(sourceType);
+        var idProperty = identificationService.FindIdPropertyAndThrow(sourceType);
         var rawDifferencesList = rawDifferences?.ToList();
         
         JToken jObj;
@@ -370,62 +456,6 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
 
         return (jObj, differences, idProperty);
     }
-    //
-    // private void SingleElemTreatment(PropertyInfo property, Difference foundedDifference, JObject jObject, 
-    //     object? propertyValue)
-    // {
-    //     var childObjectIdPropertyName = _identificationService.GetIdPropertyName(property.PropertyType);
-    //     var childObjectIdProperty = _identificationService.FindIdPropertyAndThrow(property.PropertyType);
-    //         
-    //     // Если меняем Id, значит это удаление, или добавление объекта
-    //     var idChangeDifference = foundedDifference.Childs!
-    //         .FirstOrDefault(s => s.PropertyPath == childObjectIdPropertyName);
-    //     if (idChangeDifference != null)
-    //     {
-    //         // создание
-    //         if (idChangeDifference.OldValue == null)
-    //         {
-    //             AppendToJObj
-    //             (
-    //                 jObject,
-    //                 property,
-    //                 value: GetObjectWithDifferencesInternal(propertyValue, foundedDifference.Childs!),
-    //                 type: DifferenceType.Add
-    //             );
-    //         }
-    //         // удаление
-    //         else if (idChangeDifference.NewValue == null)
-    //         {
-    //             AppendToJObj
-    //             (
-    //                 jObject,
-    //                 property,
-    //                 oldValue: GetObjectWithDifferencesInternal(propertyValue, foundedDifference.Childs!),
-    //                 type: DifferenceType.Remove
-    //             );
-    //         }
-    //                 
-    //         return;
-    //     }
-    //             
-    //     // Изменяем
-    //     AppendToJObj
-    //     (
-    //         jObject,
-    //         property,
-    //         value: GetObjectWithDifferencesInternal(propertyValue, foundedDifference.Childs!),
-    //         type: DifferenceType.Change
-    //     );
-    // }
-
-    private static string GetDifferenceType(bool isAdd, bool isRemove, IEnumerable<JToken> childJObj) =>
-        isAdd
-            ? DifferenceType.Add
-            : isRemove
-                ? DifferenceType.Remove
-                : childJObj.Any(s => s[nameof(DifferenceValue.Type)]?.ToString() != DifferenceType.None)
-                    ? DifferenceType.Change
-                    : DifferenceType.None;
 
     private JToken? SimpleTreatment(object? source, Difference? difference, Type sourceType)
     {
@@ -436,11 +466,11 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
             
         // Создание
         if (difference.OldValue == null)
-            return GetSimpleValue(source, type: DifferenceType.Add);
+            return GetSimpleAddValue(source);
 
         // Удаление
         if (difference.NewValue == null)
-            return GetSimpleValue(oldValue: source, type: DifferenceType.Remove);
+            return GetSimpleRemoveValue(source);
 
         // Изменение
         return GetSimpleValue
@@ -452,7 +482,7 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
     }
 
     private JToken? GetSimpleValueWithoutDifferences(object? value) =>
-        GetSimpleValue(value, type: DifferenceType.Add);
+        GetSimpleValue(value);
     
     private JToken? GetSimpleAddValue(object? value) =>
         GetSimpleValue(value, type: DifferenceType.Add);
@@ -473,19 +503,5 @@ public class DifferenceObjectProvider : IDifferenceObjectProvider
         };
         
         return JToken.FromObject(differenceValue);
-    }
-
-    private void AppendToJObj(JObject jObject, PropertyInfo property, object? value = null,
-        object? oldValue = null, string type = DifferenceType.None)
-    {
-        var differenceValueNone = new DifferenceValue
-        {
-            Value = value,
-            OldValue = oldValue,
-            Type = type
-        };
-
-        if (_getEmptyProperties || (differenceValueNone.Value != null || differenceValueNone.OldValue != null))
-            jObject[property.Name] = differenceValueNone.GetToken();
     }
 }
