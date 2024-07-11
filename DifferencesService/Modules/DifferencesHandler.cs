@@ -15,13 +15,14 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
         var idProperty = identificationService.FindIdPropertyAndThrow(typeOfObject);
 
         var differenceList = differences.ToList();
-        var newIdDifference = differenceList.FirstOrDefault();
-        if (newIdDifference?.NewValue == null || newIdDifference.PropertyPath != idProperty.Name)
+        var newIdDifference = differenceList.FirstOrDefault(s => s.PropertyPath == idProperty.Name &&
+                                                                 s.NewValue != null);
+        if (newIdDifference == null)
             throw new ArgumentException($"Для типа {typeOfObject.FullName} не удалось найти изменение, задающее Id.");
         
         idProperty.SetValue(obj, Convert.ChangeType(newIdDifference.NewValue, idProperty.PropertyType));
         
-        return InternalPatch(obj!, differenceList.Skip(1));
+        return InternalPatch(obj!, differenceList.Where(s => s != newIdDifference));
     }
 
     public object Patch(object sourceObject, IEnumerable<Difference> differences) => 
