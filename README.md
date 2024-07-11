@@ -3,18 +3,21 @@
 ### Получение различий между двумя объектами
 
 Функциональность представлена _IDifferenceHandler_ и предоставляет следующие механизмы:
-- Получение списка различий (класс _Difference_) - **GetDifferences(object primaryObj, object secondaryObj)**;
-- Метод применения изменений к объекту - **Patch(object sourceObject, IEnumerable<Difference> differences)**.
+- Получение списка различий (класс _Difference_) - **GetDifferences(object? primaryObj, object secondaryObj)**
+
+  В качестве первого параметра можно передать null, тогда в результирующих _IEnumerable<Difference>_ будет инициализирующее свойство (установка ИС);
+- Метод применения изменений к объекту - **Patch(object sourceObject, IEnumerable<Difference> differences)**;
+- Метод **object Build(Type typeOfObject, IEnumerable<Difference> differences)** позволяющий по типу и списку изменений, содержащих инициализирующее свойство (установку ИС) получить объект.
 
 Для подключения функциональности представлены методы расширения:
 - **IServiceCollection UseDifferenceService<TId>(this IServiceCollection services)**
 - **IServiceCollection UseDifferenceService<TId>(this IServiceCollection services, Func<DifferenceServiceOptions, DifferenceServiceOptions> setup)**
 
 Второй метод позволяет конфигурировать:
-- Наименование _идентификационного свойства_ (ИС) по умолчанию; используется для идентификации изменений объекта: **.WithDefaultIdPropertyName(string defaultIdPropertyName)** 
+- Наименование _идентификационного свойства_ (ИС) по умолчанию; используется для идентификации изменений объекта: **.WithDefaultIdPropertyName(string defaultIdPropertyName)**
 - Наименование ИС для конкретного типа объекта: **.SetupIdPropertyNameForType<T>(string idPropertyName)**
 - Задание провайдера идентификаторов для объектов _Difference_; по умолчанию используется _IntIdentificatorProvider_, который задаёт в качестве идентификаторов объектов _Difference_ целые натуральные числа; также в библиотеке присутствует _GuidIdentificatorProvider_, который задаёт в качестве идентификатора _Guid (Guid.NewGuid)_.
- 
+
   Для задания собственного провайдера необходимо в метод расширения **SetupIdentificationProvider(IIdentificationProvider provider)** передать собственный провайдер.
 
 ### Требования к работе:
@@ -397,5 +400,3 @@
 
 ### TODO
 1) Реализовать метод _Unpatch_ для отката изменений объекта по списку изменений.
-2) Доработать методы, чтобы можно было получить список изменений инициализирующие объект (передаём объект и null).
-3) Доработать методы, чтобы можно было с помощью _Patch_ и списком инициализирующих изменений получить объект из null.
