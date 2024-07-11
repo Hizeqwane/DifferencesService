@@ -64,7 +64,7 @@ public class Tests
         var p2 = GetFullProduct();
 
         var diff = _differenceHandler.GetDifferences(p1, p2);
-
+        
         var p1Patch = _differenceHandler.Patch(p1, diff);
 
         var jP1Patch = JToken.FromObject(p1Patch);
@@ -76,17 +76,17 @@ public class Tests
     [Test(Description = "Тест удаления")]
     public void TestRemove()
     {
-        var p2 = GetEmptyProduct();
-        var p1 = GetFullProduct();
+        var p1 = GetEmptyProduct();
+        var p2 = GetFullProduct();
 
-        var diff = _differenceHandler.GetDifferences(p1, p2);
+        var diff = _differenceHandler.GetDifferences(p2, p1);
 
-        var p1Patch = _differenceHandler.Patch(p1, diff);
+        var p2Patch = _differenceHandler.Patch(p2, diff);
         
-        var jP1Patch = JToken.FromObject(p1Patch);
-        var jP2 = JToken.FromObject(p2);
+        var jP2Patch = JToken.FromObject(p2Patch);
+        var jP1 = JToken.FromObject(p1);
         
-        ClassicAssert.True(_jsonDiffPatch.Diff(jP1Patch, jP2) == null);
+        ClassicAssert.True(_jsonDiffPatch.Diff(jP2Patch, jP1) == null);
     }
     
     [Test(Description = "Тест изменения внутри")]
@@ -258,7 +258,7 @@ public class Tests
         ClassicAssert.True(jsonDiffP3ToP2 == null);
     }
     
-    [Test(Description = "Тест получение объекта с изменениями")]
+    [Test(Description = "Тест получение объекта без изменений")]
     public void TestWithoutChanges_TestGetObjectWithDifferences()
     {
         var p1 = GetEmptyProduct();
@@ -294,6 +294,44 @@ public class Tests
         ClassicAssert.True(jsonDiffP1ToP1 == null);
         ClassicAssert.True(jsonDiffP2ToP2 == null);
         ClassicAssert.True(jsonDiffP3ToP3 == null);
+    }
+    
+    [Test(Description = "Тест получения инициализирующих изменений")]
+    public void TestInitializingDifferences()
+    {
+        var p1 = GetEmptyProduct();
+        var p2 = GetFullProduct();
+        var p3 = GetOtherFullProduct();
+
+        var diffP1ToNull= _differenceHandler.GetDifferences(null, p1);
+        var diffP2ToNull = _differenceHandler.GetDifferences(null, p2);
+        var diffP3ToNull = _differenceHandler.GetDifferences(null, p3);
+
+        var newP1 = _differenceHandler.Build(p1.GetType(), diffP1ToNull);
+        var newP2 = _differenceHandler.Build(p1.GetType(), diffP2ToNull);
+        var newP3 = _differenceHandler.Build(p1.GetType(), diffP3ToNull);
+        
+        var jsonDiffP1ToNewP1 = _jsonDiffPatch.Diff
+        (
+            JToken.FromObject(p1),
+            JToken.FromObject(newP1)
+        );
+        
+        var jsonDiffP2ToNewP2 = _jsonDiffPatch.Diff
+        (
+            JToken.FromObject(p2),
+            JToken.FromObject(newP2)
+        );
+        
+        var jsonDiffP3ToNewP3 = _jsonDiffPatch.Diff
+        (
+            JToken.FromObject(p3),
+            JToken.FromObject(newP3)
+        );
+        
+        ClassicAssert.True(jsonDiffP1ToNewP1 == null);
+        ClassicAssert.True(jsonDiffP2ToNewP2 == null);
+        ClassicAssert.True(jsonDiffP3ToNewP3 == null);
     }
 
     #region GetProducts
