@@ -7,8 +7,7 @@ public static class DifferenceServiceExt
     public static DifferenceServiceOptions SetupIdentificationProvider(this DifferenceServiceOptions options,
         IIdentificationProvider provider)
     {
-        if (!options.IdentificationProvidersMap.TryAdd(provider.GetIdType(), provider))
-            throw new ArgumentException($"Для типа {provider.GetType()} зарегистрировано более одного {nameof(IIdentificationProvider)}.");
+        options.SetIdentificationProvider(provider);
         
         return options;
     }
@@ -26,6 +25,14 @@ public static class DifferenceServiceExt
         string defaultIdPropertyName)
     {
         options.DefaultIdPropertyName = defaultIdPropertyName;
+        
+        return options;
+    }
+
+    public static DifferenceServiceOptions WithEmptyPropertiesBehaviour(this DifferenceServiceOptions options,
+        bool getEmptyProperties)
+    {
+        options.SetEmptyPropertiesBehaviour(getEmptyProperties);
         
         return options;
     }

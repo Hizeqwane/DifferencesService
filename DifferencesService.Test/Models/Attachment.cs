@@ -1,6 +1,8 @@
 ﻿namespace DifferencesService.Test.Models;
 
-public class Attachment<T> : Entity<T>
+public class Attachment
 {
-    public string FileName { get; set; }
+    public int Id { get; set; }
+    
+    public string Name { get; set; }
 }

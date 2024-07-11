@@ -1,0 +1,130 @@
+{
+  "Id": 1,
+  "SomeValues": [
+    {
+      "Value": 111,
+      "OldValue": null,
+      "Type": "Add"
+    },
+    {
+      "Value": 333,
+      "OldValue": null,
+      "Type": "Add"
+    }
+  ],
+  "Name": {
+    "Value": "Имя продукта - другое",
+    "OldValue": null,
+    "Type": "Add"
+  },
+  "License": {
+    "Value": {
+      "Id": 11,
+      "Name": {
+        "Value": "Имя лицензии - поменяли",
+        "OldValue": null,
+        "Type": "Add"
+      }
+    },
+    "OldValue": null,
+    "Type": "Add"
+  },
+  "Documents": [
+    {
+      "Value": {
+        "Id": 101,
+        "Name": {
+          "Value": "Имя документа - изменили",
+          "OldValue": null,
+          "Type": "Add"
+        },
+        "Attachments": [
+          {
+            "Value": {
+              "Id": 1011,
+              "Name": {
+                "Value": "Имя attachment",
+                "OldValue": null,
+                "Type": "Add"
+              }
+            },
+            "OldValue": null,
+            "Type": "Add"
+          },
+          {
+            "Value": {
+              "Id": 1013,
+              "Name": {
+                "Value": "Имя attachment",
+                "OldValue": null,
+                "Type": "Add"
+              }
+            },
+            "OldValue": null,
+            "Type": "Add"
+          }
+        ]
+      },
+      "OldValue": null,
+      "Type": "Add"
+    },
+    {
+      "Value": {
+        "Id": 103,
+        "Name": {
+          "Value": "Имя документа - добавили",
+          "OldValue": null,
+          "Type": "Add"
+        },
+        "Attachments": [
+          {
+            "Value": {
+              "Id": 1031,
+              "Name": {
+                "Value": "Имя attachment",
+                "OldValue": null,
+                "Type": "Add"
+              }
+            },
+            "OldValue": null,
+            "Type": "Add"
+          },
+          {
+            "Value": {
+              "Id": 1032,
+              "Name": {
+                "Value": "Имя attachment",
+                "OldValue": null,
+                "Type": "Add"
+              }
+            },
+            "OldValue": null,
+            "Type": "Add"
+          }
+        ]
+      },
+      "OldValue": null,
+      "Type": "Add"
+    }
+  ],
+  "CreatingDate": {
+    "Value": "11.07.2024 12:14:44",
+    "OldValue": "0001-01-01T00:00:00",
+    "Type": "Change"
+  },
+  "ModifiedDate": {
+    "Value": null,
+    "OldValue": null,
+    "Type": "None"
+  },
+  "CreatedBy": {
+    "Value": "317329de-8015-4615-968e-8bdb98687468",
+    "OldValue": "00000000-0000-0000-0000-000000000000",
+    "Type": "Change"
+  },
+  "ModifiedBy": {
+    "Value": null,
+    "OldValue": null,
+    "Type": "None"
+  }
+}

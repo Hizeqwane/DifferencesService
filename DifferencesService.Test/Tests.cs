@@ -1,9 +1,8 @@
-using System.Text.RegularExpressions;
+﻿using System.Runtime.CompilerServices;
 using DifferencesService.Interfaces;
 using DifferencesService.Modules;
 using DifferencesService.Options;
 using DifferencesService.Test.Models;
-using DifferencesService.Test.Models.CompetitorProducts;
 using JsonDiffPatchDotNet;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -13,337 +12,447 @@ namespace DifferencesService.Test;
 
 public class Tests
 {
-    private IDifferenceService<int> _intDifferenceService;
-    private IDifferenceService<Guid> _guidDifferenceService;
+    private IIdentificationService _identificationService;
+    private IDifferenceHandler _differenceHandler;
+    private IDifferenceObjectProvider _differenceObjectProvider;
+    private JsonDiffPatch _jsonDiffPatch;
+
+    private JToken _p1ToP2WithDifference;
+    private JToken _p1ToP3WithDifference;
     
-    private List<Product<int>> _idProducts;
-    private List<Difference<int>> _idDifferences;
-    private List<Difference<int>> _idDifferencesAfterProvider;
+    private JToken _p2ToP1WithDifference;
+    private JToken _p3ToP1WithDifference;
     
-    private List<Product<Guid>> _guidProducts;
-    private List<Difference<Guid>> _guidDifferences;
-    private List<Difference<Guid>> _guidDifferencesAfterProvider;
-
-    private List<Product<int>> _idProductsForDifferences;
-    private List<Product<Guid>> _guidProductsForDifferences;
-
-    private List<Product<int>> _idRightAnswer;
-    private List<Difference<int>> _idDifferencesRightAnswer;
-    private List<Product<Guid>> _guidRightAnswer;
-    private List<Difference<Guid>> _guidDifferencesRightAnswer;
-
-    #region Competitors products
-
-    private List<CompetitorProduct> _idCompetitorsProductsForDifferences;
-
-    #endregion
+    private JToken _p2ToP3WithDifference;
+    private JToken _p3ToP2WithDifference;
+    
+    private JToken _p1WithoutDifference;
+    private JToken _p2WithoutDifference;
+    private JToken _p3WithoutDifference;
     
     [SetUp]
     public void Setup()
     {
-        // Применение имён свойств для типов излишен - показан в качестве примера
+        _jsonDiffPatch = new JsonDiffPatch();
+        
         var options = new DifferenceServiceOptions()
-            .SetupIdentificationProvider(new IntIdentificationProvider())
-            .SetupIdentificationProvider(new GuidIdentificationProvider())
-            .SetupIdPropertyNameForType<int>("Id")
-            .SetupIdPropertyNameForType<Guid>("Id")
-            .WithDefaultIdPropertyName("Id");
+            .WithDefaultIdPropertyName("Id")
+            .WithEmptyPropertiesBehaviour(true);
         
-        _intDifferenceService = new DifferencesService<int>(new IdentificationService(options));
-        _guidDifferenceService = new DifferencesService<Guid>(new IdentificationService(options));
-        
-        SetupIntIds();
-        SetupGuidIds();
-        SetupIntIdsDifferences();
-        SetupGuidIdsDifferences();
-        SetupCompetitorsProductsDifferences();
-    }
+        _identificationService = new IdentificationService(options);
+        _differenceHandler = new DifferencesHandler(_identificationService);
+        _differenceObjectProvider = new DifferenceObjectProvider(_identificationService, options);
 
-    #region Setups
-
-    private void SetupIntIds()
-    {
-        var textProducts = ReadTestIdProducts();
-        var textDifferences = ReadTestIdDifferences();
-        var textRightAnswer = ReadTestIdProductsRightAnswer();
-        var textDifferencesAfterProvider = ReadTestIntDifferencesAfterProvider();
+        _p1ToP2WithDifference = Get_p1ToP2WithDifference();
+        _p1ToP3WithDifference = Get_p1ToP3WithDifference();
         
-        _idRightAnswer = JsonConvert.DeserializeObject<List<Product<int>>>(textRightAnswer)!;
-        _idProducts = JsonConvert.DeserializeObject<List<Product<int>>>(textProducts)!;
-        _idDifferences = JsonConvert.DeserializeObject<List<Difference<int>>>(textDifferences)!;
-        _idDifferencesAfterProvider = JsonConvert.DeserializeObject<List<Difference<int>>>(textDifferencesAfterProvider)!;
-        if (_idProducts == null || _idDifferences == null || _idRightAnswer == null || _idDifferencesAfterProvider == null)
-            throw new ApplicationException("Ошибка при десериализации (int).");
+        _p2ToP1WithDifference = Get_p2ToP1WithDifference();
+        _p3ToP1WithDifference = Get_p3ToP1WithDifference();
+        
+        _p2ToP3WithDifference = Get_p2ToP3WithDifference();
+        _p3ToP2WithDifference = Get_p3ToP2WithDifference();
+        
+        _p1WithoutDifference = Get_p1WithoutDifference();
+        _p2WithoutDifference = Get_p2WithoutDifference();
+        _p3WithoutDifference = Get_p3WithoutDifference();
     }
     
-    private void SetupGuidIds()
+    [Test(Description = "Тест добавления")]
+    public void TestAdd()
     {
-        var textProducts = ReadTestGuidProducts();
-        var textDifferences = ReadTestGuidDifferences();
-        var textGuidRightAnswer = ReadTestGuidProductsRightAnswer();
-        var textDifferencesAfterProvider = ReadTestGuidDifferencesAfterProvider();
+        var p1 = GetEmptyProduct();
+        var p2 = GetFullProduct();
+
+        var diff = _differenceHandler.GetDifferences(p1, p2);
+
+        var p1Patch = _differenceHandler.Patch(p1, diff);
+
+        var jP1Patch = JToken.FromObject(p1Patch);
+        var jP2 = JToken.FromObject(p2);
         
-        _guidRightAnswer = JsonConvert.DeserializeObject<List<Product<Guid>>>(textGuidRightAnswer)!;
-        _guidProducts = JsonConvert.DeserializeObject<List<Product<Guid>>>(textProducts)!;
-        _guidDifferences = JsonConvert.DeserializeObject<List<Difference<Guid>>>(textDifferences)!;
-        _guidDifferencesAfterProvider = JsonConvert.DeserializeObject<List<Difference<Guid>>>(textDifferencesAfterProvider)!;
-        if (_guidProducts == null || _guidDifferences == null || _guidRightAnswer == null || _guidDifferencesAfterProvider == null)
-            throw new ApplicationException("Ошибка при десериализации (Guid).");
+        ClassicAssert.True(_jsonDiffPatch.Diff(jP1Patch, jP2) == null);
     }
     
-    private void SetupIntIdsDifferences()
+    [Test(Description = "Тест удаления")]
+    public void TestRemove()
     {
-        var textProducts = ReadTestIntProductsForDifferences();
-        var textRightAnswer = ReadTestIntDifferencesRightAnswer();
+        var p2 = GetEmptyProduct();
+        var p1 = GetFullProduct();
+
+        var diff = _differenceHandler.GetDifferences(p1, p2);
+
+        var p1Patch = _differenceHandler.Patch(p1, diff);
         
-        _idDifferencesRightAnswer = JsonConvert.DeserializeObject<List<Difference<int>>>(textRightAnswer)!;
-        _idProductsForDifferences = JsonConvert.DeserializeObject<List<Product<int>>>(textProducts)!;
-        if (_idProductsForDifferences == null || _idDifferencesRightAnswer == null)
-            throw new ApplicationException("Ошибка при десериализации (int - differences).");
+        var jP1Patch = JToken.FromObject(p1Patch);
+        var jP2 = JToken.FromObject(p2);
+        
+        ClassicAssert.True(_jsonDiffPatch.Diff(jP1Patch, jP2) == null);
     }
     
-    private void SetupGuidIdsDifferences()
+    [Test(Description = "Тест изменения внутри")]
+    public void TestChange()
     {
-        var textProducts = ReadTestGuidProductsForDifferences();
-        var textRightAnswer = ReadTestGuidDifferencesRightAnswer();
+        var p1 = GetEmptyProduct();
+        var p2 = GetFullProduct();
+        var p3 = GetOtherFullProduct();
+
+        var diffP2ToP1 = _differenceHandler.GetDifferences(p2, p1).ToList();
+        var diffP3ToP1 = _differenceHandler.GetDifferences(p3, p1).ToList();
         
-        _guidDifferencesRightAnswer = JsonConvert.DeserializeObject<List<Difference<Guid>>>(textRightAnswer)!;
-        _guidProductsForDifferences = JsonConvert.DeserializeObject<List<Product<Guid>>>(textProducts)!;
-        if (_guidProductsForDifferences == null || _guidDifferencesRightAnswer == null)
-            throw new ApplicationException("Ошибка при десериализации (Guid - differences).");
+        var diffP1ToP2 = _differenceHandler.GetDifferences(p1, p2).ToList();
+        var diffP3ToP2 = _differenceHandler.GetDifferences(p3, p2).ToList();
+        
+        var diffP1ToP3 = _differenceHandler.GetDifferences(p1, p3).ToList();
+        var diffP2ToP3 = _differenceHandler.GetDifferences(p2, p3).ToList();
+
+        var p2PatchToP1 = _differenceHandler.Patch(p2, diffP2ToP1);
+        var p3PatchToP1 = _differenceHandler.Patch(p3, diffP3ToP1);
+        
+        var p1PatchToP2 = _differenceHandler.Patch(p1, diffP1ToP2);
+        var p3PatchToP2 = _differenceHandler.Patch(p3, diffP3ToP2);
+        
+        var p1PatchToP3 = _differenceHandler.Patch(p1, diffP1ToP3);
+        var p2PatchToP3 = _differenceHandler.Patch(p2, diffP2ToP3);
+        
+        var p1PatchToP2PatchToP3 = _differenceHandler.Patch(p1PatchToP2, diffP2ToP3);
+        var p1PatchToP3PatchToP2 = _differenceHandler.Patch(p1PatchToP3, diffP3ToP2);
+        
+        var p2PatchToP1PatchToP3 = _differenceHandler.Patch(p2PatchToP1, diffP1ToP3);
+        var p2PatchToP3PatchToP1 = _differenceHandler.Patch(p2PatchToP3, diffP3ToP1);
+        
+        var p3PatchToP1PatchToP2 = _differenceHandler.Patch(p3PatchToP1, diffP1ToP2);
+        var p3PatchToP2PatchToP1 = _differenceHandler.Patch(p3PatchToP2, diffP2ToP1);
+
+        var jp1 = JToken.FromObject(p1);
+        var jp2 = JToken.FromObject(p2);
+        var jp3 = JToken.FromObject(p3);
+        
+        var jp2PatchToP1 = JToken.FromObject(p2PatchToP1);
+        var jp3PatchToP1 = JToken.FromObject(p3PatchToP1);
+        var jp1PatchToP2 = JToken.FromObject(p1PatchToP2);
+        var jp3PatchToP2 = JToken.FromObject(p3PatchToP2);
+        var jp1PatchToP3 = JToken.FromObject(p1PatchToP3);
+        var jp2PatchToP3 = JToken.FromObject(p2PatchToP3);
+        
+        var jp1PatchToP2PatchToP3 = JToken.FromObject(p1PatchToP2PatchToP3);
+        var jp1PatchToP3PatchToP2 = JToken.FromObject(p1PatchToP3PatchToP2);
+        var jp2PatchToP1PatchToP3 = JToken.FromObject(p2PatchToP1PatchToP3);
+        var jp2PatchToP3PatchToP1 = JToken.FromObject(p2PatchToP3PatchToP1);
+        var jp3PatchToP1PatchToP2 = JToken.FromObject(p3PatchToP1PatchToP2);
+        var jp3PatchToP2PatchToP1 = JToken.FromObject(p3PatchToP2PatchToP1);
+        
+        ClassicAssert.True(_jsonDiffPatch.Diff(jp2PatchToP1, jp1) == null);
+        ClassicAssert.True(_jsonDiffPatch.Diff(jp3PatchToP1, jp1) == null);
+        
+        ClassicAssert.True(_jsonDiffPatch.Diff(jp1PatchToP2, jp2) == null);
+        ClassicAssert.True(_jsonDiffPatch.Diff(jp3PatchToP2, jp2) == null);
+        
+        ClassicAssert.True(_jsonDiffPatch.Diff(jp2PatchToP3, jp3) == null);
+        ClassicAssert.True(_jsonDiffPatch.Diff(jp1PatchToP3, jp3) == null);
+        
+        ClassicAssert.True(_jsonDiffPatch.Diff(jp1PatchToP2PatchToP3, jp3) == null);
+        ClassicAssert.True(_jsonDiffPatch.Diff(jp1PatchToP3PatchToP2, jp2) == null);
+        ClassicAssert.True(_jsonDiffPatch.Diff(jp2PatchToP1PatchToP3, jp3) == null);
+        ClassicAssert.True(_jsonDiffPatch.Diff(jp2PatchToP3PatchToP1, jp1) == null);
+        ClassicAssert.True(_jsonDiffPatch.Diff(jp3PatchToP1PatchToP2, jp2) == null);
+        ClassicAssert.True(_jsonDiffPatch.Diff(jp3PatchToP2PatchToP1, jp1) == null);
     }
     
-    private void SetupCompetitorsProductsDifferences()
+    [Test(Description = "Тест объектов без изменений")]
+    public void TestWithoutChange()
     {
-        var textProducts = ReadTestIntCompetitorProductsForDifferences();
-        //var textRightAnswer = ReadTestIntCompetitorDifferencesRightAnswer();
+        var p1 = GetEmptyProduct();
+        var p2 = GetFullProduct();
+        var p3 = GetOtherFullProduct();
+
+        var diffP1 = _differenceHandler.GetDifferences(p1, p1);
+        var diffP2 = _differenceHandler.GetDifferences(p2, p2);
+        var diffP3 = _differenceHandler.GetDifferences(p3, p3);
         
-        //_guidDifferencesRightAnswer = JsonConvert.DeserializeObject<List<Difference<Guid>>>(textRightAnswer)!;
-        _idCompetitorsProductsForDifferences = JsonConvert.DeserializeObject<List<CompetitorProduct>>(textProducts)!;
-        if (_idCompetitorsProductsForDifferences == null)// || _guidDifferencesRightAnswer == null)
-            throw new ApplicationException("Ошибка при десериализации CompetitorProducts.");
+        ClassicAssert.True(!diffP1.Any() && !diffP2.Any() && !diffP3.Any());
+    }
+    
+    [Test(Description = "Тест получение объекта с изменениями")]
+    public void TestAdd_TestGetObjectWithDifferences()
+    {
+        var p1 = GetEmptyProduct();
+        var p2 = GetFullProduct();
+        var p3 = GetOtherFullProduct();
+
+        var diffP1ToP2 = _differenceHandler.GetDifferences(p1, p2);
+        var diffP1ToP3 = _differenceHandler.GetDifferences(p1, p3);
+
+        var fromP1ToP2WithDifferences = _differenceObjectProvider.GetObjectWithDifferences(p1, diffP1ToP2);
+        var fromP1ToP3WithDifferences = _differenceObjectProvider.GetObjectWithDifferences(p1, diffP1ToP3);
+        
+        var jsonDiffP1ToP2 = _jsonDiffPatch.Diff
+        (
+            JToken.Parse(JsonConvert.SerializeObject(fromP1ToP2WithDifferences)),
+            _p1ToP2WithDifference
+        );
+
+        var jsonDiffP1ToP3 = _jsonDiffPatch.Diff
+        (
+            JToken.Parse(JsonConvert.SerializeObject(fromP1ToP3WithDifferences)),
+            _p1ToP3WithDifference
+        );
+        
+        ClassicAssert.True(jsonDiffP1ToP2 == null);
+        ClassicAssert.True(jsonDiffP1ToP3 == null);
+    }
+    
+    [Test(Description = "Тест получение объекта с изменениями")]
+    public void TestRemove_TestGetObjectWithDifferences()
+    {
+        var p1 = GetEmptyProduct();
+        var p2 = GetFullProduct();
+        var p3 = GetOtherFullProduct();
+
+        var diffP2ToP1 = _differenceHandler.GetDifferences(p2, p1);
+        var diffP3ToP1 = _differenceHandler.GetDifferences(p3, p1);
+
+        var fromP2ToP1WithDifferences = _differenceObjectProvider.GetObjectWithDifferences(p2, diffP2ToP1);
+        var fromP3ToP1WithDifferences = _differenceObjectProvider.GetObjectWithDifferences(p3, diffP3ToP1);
+
+        var jsonDiffP2ToP1 = _jsonDiffPatch.Diff
+        (
+            JToken.Parse(JsonConvert.SerializeObject(fromP2ToP1WithDifferences)),
+            _p2ToP1WithDifference
+        );
+
+        var jsonDiffP3ToP1 = _jsonDiffPatch.Diff
+        (
+            JToken.Parse(JsonConvert.SerializeObject(fromP3ToP1WithDifferences)),
+            _p3ToP1WithDifference
+        );
+        
+        ClassicAssert.True(jsonDiffP2ToP1 == null);
+        ClassicAssert.True(jsonDiffP3ToP1 == null);
+    }
+    
+    [Test(Description = "Тест получение объекта с изменениями")]
+    public void TestChange_TestGetObjectWithDifferences()
+    {
+        var p2 = GetFullProduct();
+        var p3 = GetOtherFullProduct();
+
+        var diffP2ToP3 = _differenceHandler.GetDifferences(p2, p3);
+        var diffP3ToP2 = _differenceHandler.GetDifferences(p3, p2);
+        
+        var fromP2ToP3WithDifferences = _differenceObjectProvider.GetObjectWithDifferences(p2, diffP2ToP3);
+        var fromP3ToP2WithDifferences = _differenceObjectProvider.GetObjectWithDifferences(p3, diffP3ToP2);
+
+        var jsonDiffP2ToP3 = _jsonDiffPatch.Diff
+        (
+            JToken.Parse(JsonConvert.SerializeObject(fromP2ToP3WithDifferences)),
+            _p2ToP3WithDifference
+        );
+
+        var jsonDiffP3ToP2 = _jsonDiffPatch.Diff
+        (
+            JToken.Parse(JsonConvert.SerializeObject(fromP3ToP2WithDifferences)),
+            _p3ToP2WithDifference
+        );
+        
+        ClassicAssert.True(jsonDiffP2ToP3 == null);
+        ClassicAssert.True(jsonDiffP3ToP2 == null);
+    }
+    
+    [Test(Description = "Тест получение объекта с изменениями")]
+    public void TestWithoutChanges_TestGetObjectWithDifferences()
+    {
+        var p1 = GetEmptyProduct();
+        var p2 = GetFullProduct();
+        var p3 = GetOtherFullProduct();
+
+        var diffP1ToP1 = _differenceHandler.GetDifferences(p1, p1);
+        var diffP2ToP2 = _differenceHandler.GetDifferences(p2, p2);
+        var diffP3ToP3 = _differenceHandler.GetDifferences(p3, p3);
+
+        var fromP1WithoutDifferences = _differenceObjectProvider.GetObjectWithDifferences(p1, diffP1ToP1);
+        var fromP2WithoutDifferences = _differenceObjectProvider.GetObjectWithDifferences(p2, diffP2ToP2);
+        var fromP3WithoutDifferences = _differenceObjectProvider.GetObjectWithDifferences(p3, diffP3ToP3);
+
+        var jsonDiffP1ToP1 = _jsonDiffPatch.Diff
+        (
+            JToken.Parse(JsonConvert.SerializeObject(fromP1WithoutDifferences)),
+            _p1WithoutDifference
+        );
+        
+        var jsonDiffP2ToP2 = _jsonDiffPatch.Diff
+        (
+            JToken.Parse(JsonConvert.SerializeObject(fromP2WithoutDifferences)),
+            _p2WithoutDifference
+        );
+
+        var jsonDiffP3ToP3 = _jsonDiffPatch.Diff
+        (
+            JToken.Parse(JsonConvert.SerializeObject(fromP3WithoutDifferences)),
+            _p3WithoutDifference
+        );
+        
+        ClassicAssert.True(jsonDiffP1ToP1 == null);
+        ClassicAssert.True(jsonDiffP2ToP2 == null);
+        ClassicAssert.True(jsonDiffP3ToP3 == null);
     }
 
-    #endregion Setups
+    #region GetProducts
 
-    [Test(Description = "Проверка работы с сущностями Entity<int>")]
-    public void Test1()
-    {
-        var fromProvider = true;
-        if (fromProvider)
+    private Product GetEmptyProduct() =>
+        new Product
         {
-            foreach (var product in _idProducts) 
-                _intDifferenceService.Patch(product, _idDifferencesAfterProvider);
-        
-            var result1 = $"[{string.Join(',', _idProducts.Select(JsonConvert.SerializeObject))}]"; 
-            WriteIntFile(result1);
-        
-            var jsonDiffers1 = new JsonDiffPatch().Diff(JToken.Parse(JsonConvert.SerializeObject(_idProducts)), JToken.Parse(JsonConvert.SerializeObject(_idRightAnswer)));
-
-            ClassicAssert.AreEqual(jsonDiffers1, null!);
-            return;
-        }
-
-        foreach (var product in _idProducts) 
-            _intDifferenceService.Patch(product, _idDifferences);
-        
-        var result = $"[{string.Join(',', _idProducts.Select(JsonConvert.SerializeObject))}]"; 
-        WriteIntFile(result);
-        
-        var jsonDiffers = new JsonDiffPatch().Diff(JToken.Parse(JsonConvert.SerializeObject(_idProducts)), JToken.Parse(JsonConvert.SerializeObject(_idRightAnswer)));
-
-        ClassicAssert.AreEqual(jsonDiffers, null!);
-    }
+            Id = 1,
+            CreatingDate = default,
+            CreatedBy = default
+        };
     
-    [Test(Description = "Проверка работы с сущностями Entity<Guid>")]
-    public void Test2()
-    {
-        var fromProvider = true;
-        if (fromProvider)
+    private Product GetFullProduct() =>
+        new Product
         {
-            foreach (var product in _guidProducts)
-                _guidDifferenceService.Patch(product, _guidDifferencesAfterProvider);
+            Id = 1,
+            Name = "Имя продукта",
+            License = new License
+            {
+                Id = 11,
+                Name = "Имя лицензии"
+            },
+            Documents = new List<Document>
+            {
+                new Document
+                {
+                    Id = 101,
+                    Name = "Имя документа",
+                    Attachments = new List<Attachment>
+                    {
+                        new Attachment
+                        {
+                            Id = 1011,
+                            Name = "Имя attachment"
+                        },
+                        new Attachment
+                        {
+                            Id = 1012,
+                            Name = "Имя attachment"
+                        }
+                    }
+                },
+                new Document
+                {
+                    Id = 102,
+                    Name = "Имя документа",
+                    Attachments = new List<Attachment>
+                    {
+                        new Attachment
+                        {
+                            Id = 1021,
+                            Name = "Имя attachment"
+                        },
+                        new Attachment
+                        {
+                            Id = 1022,
+                            Name = "Имя attachment"
+                        }
+                    }
+                }
+            },
+            SomeValues = [111, 222],
+            CreatingDate = DateTime.Parse("11.07.2024 12:14:44"),
+            ModifiedDate = DateTime.Parse("10.07.2024 12:14:44"),
+            CreatedBy = Guid.Parse("d3d8d19d-0da3-4499-8999-df423dea804a"),
+            ModifiedBy = Guid.Parse("95c3ac7b-2e5a-4f77-9871-f70d9cf0c8a5")
+        };
+    
+    private Product GetOtherFullProduct() =>
+        new Product
+        {
+            Id = 1,
+            Name = "Имя продукта - другое",
+            License = new License
+            {
+                Id = 11,
+                Name = "Имя лицензии - поменяли"
+            },
+            Documents = new List<Document>
+            {
+                new Document
+                {
+                    Id = 101,
+                    Name = "Имя документа - изменили",
+                    Attachments = new List<Attachment>
+                    {
+                        new Attachment
+                        {
+                            Id = 1011,
+                            Name = "Имя attachment"
+                        },
+                        // Удалили 1012
+                        new Attachment
+                        {
+                            Id = 1013,
+                            Name = "Имя attachment"
+                        }
+                    }
+                },
+                // Удалили 102
+                new Document
+                {
+                    Id = 103,
+                    Name = "Имя документа - добавили",
+                    Attachments = new List<Attachment>
+                    {
+                        new Attachment
+                        {
+                            Id = 1031,
+                            Name = "Имя attachment"
+                        },
+                        new Attachment
+                        {
+                            Id = 1032,
+                            Name = "Имя attachment"
+                        }
+                    }
+                }
+            },
+            SomeValues = [111, 333],
+            CreatingDate = DateTime.Parse("11.07.2024 12:14:44"),
+            ModifiedDate = null,
+            CreatedBy = Guid.Parse("317329de-8015-4615-968e-8bdb98687468"),
+            ModifiedBy = null
+        };
+
+    #endregion GetProducts
+
+    #region GetTestDataFiles
+
+    private JToken Get_p1ToP2WithDifference() => GetFile();
+    
+    private JToken Get_p1ToP3WithDifference() => GetFile();
+    
+    private JToken Get_p2ToP1WithDifference() => GetFile();
+    
+    private JToken Get_p3ToP1WithDifference() => GetFile();
+    
+    private JToken Get_p2ToP3WithDifference() => GetFile();
+    
+    private JToken Get_p3ToP2WithDifference() => GetFile();
+    
+    private JToken Get_p1WithoutDifference() => GetFile();
+    
+    private JToken Get_p2WithoutDifference() => GetFile();
+    
+    private JToken Get_p3WithoutDifference() => GetFile();
+    
+    private JToken GetFile([CallerMemberName]string fileNameMethod = "")
+    {
+        var fileName = $"TestData/{fileNameMethod.Replace("Get_", "")}.json";
         
-            var result1 = $"[{string.Join(',', _guidProducts.Select(JsonConvert.SerializeObject))}]"; 
-            WriteGuidFile(result1);
+        if (!File.Exists(fileName)) 
+            throw new Exception($"Файл {fileName} не найден.");
+        
+        var file = File.ReadAllText(fileName);
             
-            var jsonDiffers1 = new JsonDiffPatch().Diff(JToken.Parse(JsonConvert.SerializeObject(_guidProducts)), JToken.Parse(JsonConvert.SerializeObject(_guidRightAnswer)));
-
-            ClassicAssert.AreEqual(jsonDiffers1, null!);
-            return;
-        }
-        
-        foreach (var product in _guidProducts) 
-            _guidDifferenceService.Patch(product, _guidDifferences);
-
-        var result = $"[{string.Join(',', _guidProducts.Select(JsonConvert.SerializeObject))}]"; 
-        WriteGuidFile(result);
-
-        var jsonDiffers = new JsonDiffPatch().Diff(JsonConvert.SerializeObject(_guidProducts), JsonConvert.SerializeObject(_guidRightAnswer));
-        
-        ClassicAssert.AreEqual(jsonDiffers, null);
-    }
-    
-    [Test(Description = "Проверка работы с сущностями Entity<int> - Поиск differences")]
-    public void Test3()
-    {
-        if (_idProductsForDifferences.Count != 2)
-            throw new ArgumentException($"Тест расчитан на сравнение двух продуктов.");
-        
-        var differences = _intDifferenceService.GetDifferences
-        (
-            _idProductsForDifferences[0],
-            _idProductsForDifferences[1]
-        );
-
-        WriteIntDifferencesFile(JsonConvert.SerializeObject(differences));
-        
-        var jsonDiffers = new JsonDiffPatch().Diff(JsonConvert.SerializeObject(differences), JsonConvert.SerializeObject(_idDifferencesRightAnswer));
-        
-        ClassicAssert.AreEqual(jsonDiffers, null);
-    }
-    
-    [Test(Description = "Проверка работы с сущностями Entity<Guid> - Поиск differences")]
-    public void Test4()
-    {
-        if (_guidProductsForDifferences.Count != 2)
-            throw new ArgumentException($"Тест расчитан на сравнение двух продуктов.");
-        
-        var differences = _guidDifferenceService.GetDifferences
-        (
-            _guidProductsForDifferences[0],
-            _guidProductsForDifferences[1]
-        );
-
-        WriteGuidDifferencesFile(JsonConvert.SerializeObject(differences));
-
-        var guidChar = "[0-9A-Fa-f]";
-        var guidRegex = new Regex(guidChar + "{8}-" + guidChar + "{4}-" + guidChar + "{4}-" + guidChar + "{4}-" + guidChar + "{12}");
-        
-        var differencesStrWithEmptyGuids = guidRegex.Replace(JsonConvert.SerializeObject(differences), Guid.Empty.ToString());
-        var differencesRightAnswerWithEmptyGuids = guidRegex.Replace(JsonConvert.SerializeObject(_guidDifferencesRightAnswer), Guid.Empty.ToString());
-        
-        var jsonDiffers = new JsonDiffPatch().Diff(differencesStrWithEmptyGuids, differencesRightAnswerWithEmptyGuids);
-        
-        ClassicAssert.AreEqual(jsonDiffers, null);
-    }
-    
-    [Test(Description = "Проверка работы с сущностями CompetitorProducts - Поиск differences")]
-    public void Test5()
-    {
-        if (_idCompetitorsProductsForDifferences.Count != 2)
-            throw new ArgumentException($"Тест расчитан на сравнение двух продуктов.");
-        
-        var differences = _intDifferenceService.GetDifferences
-        (
-            _idCompetitorsProductsForDifferences[0],
-            _idCompetitorsProductsForDifferences[1]
-        );
-
-        //WriteIntDifferencesFile(JsonConvert.SerializeObject(differences));
-        
-        //var jsonDiffers = new JsonDiffPatch().Diff(JsonConvert.SerializeObject(differences), JsonConvert.SerializeObject(_idDifferencesRightAnswer));
-        
-        //ClassicAssert.AreEqual(jsonDiffers, null);
-        
-        ClassicAssert.IsTrue(true);
+        return JToken.Parse(file);
     }
 
-    #region Work with files
-
-    #region Test1 - Применение differences к List<Product<int>>
-
-    private static string ReadTestIdProducts() =>
-        ReadTest("TestData/DifferencesApplier/IntId/Products.json");
-    
-    private static string ReadTestIdProductsRightAnswer() =>
-        ReadTest("TestData/DifferencesApplier/IntId/ProductsRightAnswer.json");
-
-    private static string ReadTestIdDifferences() =>
-        ReadTest("TestData/DifferencesApplier/IntId/DifferenceToApply.json");
-    
-    private static string ReadTestIntDifferencesAfterProvider() =>
-        ReadTest("TestData/DifferencesApplier/IntId/DifferencesAfterProvider.json");
-    
-    private static string ReadTestGuidDifferencesAfterProvider() =>
-        ReadTest("TestData/DifferencesApplier/GuidId/DifferencesAfterProvider.json");
-
-    #endregion Test1 - Применение differences к List<Product<int>>
-    
-    #region Test2 - Применение differences к List<Product<Guid>>
-    
-    private static string ReadTestGuidProducts() =>
-        ReadTest("TestData/DifferencesApplier/GuidId/Products.json");
-    
-    private static string ReadTestGuidProductsRightAnswer() =>
-        ReadTest("TestData/DifferencesApplier/GuidId/ProductsRightAnswer.json");
-
-    private static string ReadTestGuidDifferences() =>
-        ReadTest("TestData/DifferencesApplier/GuidId/DifferenceToApply.json");
-    
-    #endregion Test2 - Применение differences к List<Product<Guid>>
-    
-    #region Test3 - Поиск differences в Product<int>
-    
-    private static string ReadTestIntProductsForDifferences() =>
-        ReadTest("TestData/GetDifferences/IntId/Products.json");
-    
-    private static string ReadTestIntDifferencesRightAnswer() =>
-        ReadTest("TestData/GetDifferences/IntId/DifferenceRightAnswer.json");
-    
-    #endregion Test3 - Поиск differences в Product<int>
-    
-    #region Test4 - Поиск differences в Product<Guid>
-    
-    private static string ReadTestGuidProductsForDifferences() =>
-        ReadTest("TestData/GetDifferences/GuidId/Products.json");
-    
-    private static string ReadTestGuidDifferencesRightAnswer() =>
-        ReadTest("TestData/GetDifferences/GuidId/DifferenceRightAnswer.json");
-    
-    #endregion Test4 - Поиск differences в Product<Guid>
-    
-    #region Test5 - Поиск differences в CompetitorProduct<int>
-    
-    private static string ReadTestIntCompetitorProductsForDifferences() =>
-        ReadTest("TestData/CompetitorProducts/CompetitorProducts.json");
-    
-    private static string ReadTestIntCompetitorDifferencesRightAnswer() =>
-        ReadTest("TestData/CompetitorProducts/DifferenceRightAnswer.json");
-    
-    #endregion Test3 - Поиск differences в Product<int>
-
-    private static string ReadTest(string filePath)
-    {
-        if (!File.Exists(filePath))
-            throw new NullReferenceException("Файл с тестовыми данными не найден.");
-
-        return File.ReadAllText(filePath);
-    }
-
-    private static void WriteIntFile(string content)
-    {
-        const string filePath = "TestData/DifferencesApplier/IntId/ProductAfterDifferences.json";
-        File.WriteAllText(filePath, content);
-    }
-    
-    private static void WriteGuidFile(string content)
-    {
-        const string filePath = "TestData/DifferencesApplier/GuidId/ProductAfterDifferences.json";
-        File.WriteAllText(filePath, content);
-    }
-    
-    private static void WriteIntDifferencesFile(string content)
-    {
-        const string filePath = "TestData/GetDifferences/IntId/DifferencesAfterProvider.json";
-        File.WriteAllText(filePath, content);
-    }
-    
-    private static void WriteGuidDifferencesFile(string content)
-    {
-        const string filePath = "TestData/GetDifferences/GuidId/DifferencesAfterProvider.json";
-        File.WriteAllText(filePath, content);
-    }
-
-    #endregion Work with files
+    #endregion
 }

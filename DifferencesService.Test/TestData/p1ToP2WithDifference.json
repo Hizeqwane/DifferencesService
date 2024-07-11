@@ -1,0 +1,130 @@
+{
+  "Id": 1,
+  "SomeValues": [
+    {
+      "Value": 111,
+      "OldValue": null,
+      "Type": "Add"
+    },
+    {
+      "Value": 222,
+      "OldValue": null,
+      "Type": "Add"
+    }
+  ],
+  "Name": {
+    "Value": "Имя продукта",
+    "OldValue": null,
+    "Type": "Add"
+  },
+  "License": {
+    "Value": {
+      "Id": 11,
+      "Name": {
+        "Value": "Имя лицензии",
+        "OldValue": null,
+        "Type": "Add"
+      }
+    },
+    "OldValue": null,
+    "Type": "Add"
+  },
+  "Documents": [
+    {
+      "Value": {
+        "Id": 101,
+        "Name": {
+          "Value": "Имя документа",
+          "OldValue": null,
+          "Type": "Add"
+        },
+        "Attachments": [
+          {
+            "Value": {
+              "Id": 1011,
+              "Name": {
+                "Value": "Имя attachment",
+                "OldValue": null,
+                "Type": "Add"
+              }
+            },
+            "OldValue": null,
+            "Type": "Add"
+          },
+          {
+            "Value": {
+              "Id": 1012,
+              "Name": {
+                "Value": "Имя attachment",
+                "OldValue": null,
+                "Type": "Add"
+              }
+            },
+            "OldValue": null,
+            "Type": "Add"
+          }
+        ]
+      },
+      "OldValue": null,
+      "Type": "Add"
+    },
+    {
+      "Value": {
+        "Id": 102,
+        "Name": {
+          "Value": "Имя документа",
+          "OldValue": null,
+          "Type": "Add"
+        },
+        "Attachments": [
+          {
+            "Value": {
+              "Id": 1021,
+              "Name": {
+                "Value": "Имя attachment",
+                "OldValue": null,
+                "Type": "Add"
+              }
+            },
+            "OldValue": null,
+            "Type": "Add"
+          },
+          {
+            "Value": {
+              "Id": 1022,
+              "Name": {
+                "Value": "Имя attachment",
+                "OldValue": null,
+                "Type": "Add"
+              }
+            },
+            "OldValue": null,
+            "Type": "Add"
+          }
+        ]
+      },
+      "OldValue": null,
+      "Type": "Add"
+    }
+  ],
+  "CreatingDate": {
+    "Value": "11.07.2024 12:14:44",
+    "OldValue": "0001-01-01T00:00:00",
+    "Type": "Change"
+  },
+  "ModifiedDate": {
+    "Value": "10.07.2024 12:14:44",
+    "OldValue": null,
+    "Type": "Add"
+  },
+  "CreatedBy": {
+    "Value": "d3d8d19d-0da3-4499-8999-df423dea804a",
+    "OldValue": "00000000-0000-0000-0000-000000000000",
+    "Type": "Change"
+  },
+  "ModifiedBy": {
+    "Value": "95c3ac7b-2e5a-4f77-9871-f70d9cf0c8a5",
+    "OldValue": null,
+    "Type": "Add"
+  }
+}

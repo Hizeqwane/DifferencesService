@@ -4,9 +4,9 @@ namespace DifferencesService.Interfaces;
 
 public interface IIdentificationService
 {
-    public TId GetNextId<TId>();
+    public object GetNextId();
     
-    public void Flush<TId>();
+    public void Flush();
 
     PropertyInfo FindIdPropertyAndThrow(Type typeOfObject, PropertyInfo[]? properties = null);
 

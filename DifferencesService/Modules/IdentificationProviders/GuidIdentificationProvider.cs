@@ -1,6 +1,6 @@
 ﻿using DifferencesService.Interfaces;
 
-namespace DifferencesService.Modules;
+namespace DifferencesService.Modules.IdentificationProviders;
 
 public class GuidIdentificationProvider : IIdentificationProvider
 {
