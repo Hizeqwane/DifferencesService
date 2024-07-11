@@ -9,11 +9,31 @@ namespace DifferencesService.Modules;
 
 public class DifferencesHandler(IIdentificationService identificationService) : IDifferenceHandler
 {
+    public object Build(Type typeOfObject, IEnumerable<Difference> differences)
+    {
+        var obj = typeOfObject.GetInstance();
+        var idProperty = identificationService.FindIdPropertyAndThrow(typeOfObject);
+
+        var differenceList = differences.ToList();
+        var newIdDifference = differenceList.FirstOrDefault();
+        if (newIdDifference?.NewValue == null || newIdDifference.PropertyPath != idProperty.Name)
+            throw new ArgumentException($"Для типа {typeOfObject.FullName} не удалось найти изменение, задающее Id.");
+        
+        idProperty.SetValue(obj, Convert.ChangeType(newIdDifference.NewValue, idProperty.PropertyType));
+        
+        return InternalPatch(obj!, differenceList.Skip(1));
+    }
+
     public object Patch(object sourceObject, IEnumerable<Difference> differences) => 
         InternalPatch(sourceObject, differences);
 
-    public IEnumerable<Difference> GetDifferences(object primaryObj, object secondaryObj) => 
-        InternalGetDifferences(primaryObj, secondaryObj);
+    public IEnumerable<Difference> GetDifferences(object? primaryObj, object secondaryObj)
+    {
+        if (secondaryObj == null)
+            throw new ArgumentException($"Второй объект равен null.");
+        
+        return InternalGetDifferences(primaryObj, secondaryObj);
+    }
 
     #region Internal patch
 
@@ -265,21 +285,43 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
 
     #region Internal differences provider
 
-    private List<Difference> InternalGetDifferences(object primaryObj, object secondaryObj)
+    private List<Difference> InternalGetDifferences(object? rawPrimaryObj, object secondaryObj)
     {
-        var typeOfObject = primaryObj.GetType();
-        if (typeOfObject != secondaryObj.GetType())
-            throw new ArgumentException($"Типы объектов не совпадают.");
+        var differencesList = new List<Difference>();
         
+        object primaryObj = null!;
+        
+        var typeOfObject = secondaryObj.GetType();
         var properties = typeOfObject.GetProperties();
         var idProperty = identificationService.FindIdPropertyAndThrow(typeOfObject, properties);
+        
+        // Нужна инициализация
+        if (rawPrimaryObj == null)
+        {
+            var id = idProperty.GetValue(secondaryObj)!;
+                
+            primaryObj = typeOfObject.GetInstance()!;
+            idProperty.SetValue(primaryObj, Convert.ChangeType(id, idProperty.PropertyType));
+            
+            differencesList.Add(new Difference
+            {
+                Id = identificationService.GetNextId(),
+                EntityId = null!,
+                PropertyPath = idProperty.Name,
+                OldValue = null,
+                NewValue = id?.ToString(),
+                Childs = null
+            });
+        }
+        
+        
+        if (typeOfObject != secondaryObj.GetType())
+            throw new ArgumentException($"Типы объектов не совпадают.");
         
         var primaryObjIdPropertyValue = idProperty.GetValue(primaryObj);
         var secondaryObjIdPropertyValue = idProperty.GetValue(secondaryObj);
         if (!primaryObjIdPropertyValue.IsEqualsFromToString(secondaryObjIdPropertyValue))
             throw new ArgumentException($"У переданных объектов обнаружены разные значения идентификационных свойств.");
-
-        var differencesList = new List<Difference>();
         
         foreach (var property in properties.Where(s => s.Name != idProperty.Name))
         {
