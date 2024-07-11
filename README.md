@@ -7,7 +7,7 @@
 
   В качестве первого параметра можно передать null, тогда в результирующих _IEnumerable<Difference>_ будет инициализирующее свойство (установка ИС);
 - Метод применения изменений к объекту - **Patch(object sourceObject, IEnumerable<Difference> differences)**;
-- Метод **object Build(Type typeOfObject, IEnumerable<Difference> differences)** позволяющий по типу и списку изменений, содержащих инициализирующее свойство (установку ИС) получить объект.
+- Метод **object Build(Type typeOfObject, IEnumerable\<Difference\> differences)** позволяющий по типу и списку изменений, содержащих инициализирующее свойство (установку ИС) получить объект.
 
 Для подключения функциональности представлены методы расширения:
 - **IServiceCollection UseDifferenceService<TId>(this IServiceCollection services)**
