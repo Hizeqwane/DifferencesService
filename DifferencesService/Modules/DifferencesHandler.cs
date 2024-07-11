@@ -290,7 +290,7 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
     {
         var differencesList = new List<Difference>();
         
-        object primaryObj = null!;
+        var primaryObj = rawPrimaryObj!;
         
         var typeOfObject = secondaryObj.GetType();
         var properties = typeOfObject.GetProperties();
