@@ -5,7 +5,7 @@
 Функциональность представлена _IDifferenceHandler_ и предоставляет следующие механизмы:
 - Получение списка различий (класс _Difference_) - **GetDifferences(object? primaryObj, object secondaryObj)**
 
-  В качестве первого параметра можно передать null, тогда в результирующих _IEnumerable<Difference>_ на первом месте будет инициализирующее свойство (установка ИС);
+  В качестве первого параметра можно передать null, тогда в результирующих _IEnumerable<Difference>_ будет инициализирующее свойство (установка ИС);
 - Метод применения изменений к объекту - **Patch(object sourceObject, IEnumerable<Difference> differences)**;
 - Метод **object Build(Type typeOfObject, IEnumerable<Difference> differences)** позволяющий по типу и списку изменений, содержащих инициализирующее свойство (установку ИС) получить объект.
 
