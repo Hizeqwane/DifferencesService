@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using DifferencesService.Interfaces;
 using DifferencesService.Models;
@@ -9,6 +8,96 @@ namespace DifferencesService.Modules;
 
 public class DifferencesHandler(IIdentificationService identificationService) : IDifferenceHandler
 {
+    public IEnumerable<Difference> GetRevertingDifferences(IEnumerable<Difference> differences, Type typeOfObject)
+    {
+        var properties = typeOfObject.GetProperties();
+        var idProperty = identificationService.FindIdPropertyAndThrow(typeOfObject, properties);
+        
+        var differencesList = differences.ToList();
+        differencesList.Reverse();
+
+        identificationService.Flush();
+        
+        foreach (var difference in differencesList)
+        {
+            // Простое изменение
+            if (difference.Childs == null)
+            {
+                // Нашли инициализирующее или удаляющее изменение
+                if (difference.PropertyPath == idProperty.Name)
+                {
+                    // Удаляющее изменение
+                    if (difference.NewValue == null)
+                    {
+                        var newAddDifference = new Difference
+                        {
+                            Id = identificationService.GetNextId(),
+                            PropertyPath = difference.PropertyPath,
+                            EntityId = null!,
+                            NewValue = difference.OldValue,
+                            OldValue = difference.NewValue,
+                            Childs = difference.Childs
+                        };
+
+                        yield return newAddDifference;
+                        continue;
+                    }
+                    
+                    // Инициализирующее изменение
+                    if (difference.OldValue == null)
+                    {
+                        var newRemoveDifference = new Difference
+                        {
+                            Id = identificationService.GetNextId(),
+                            PropertyPath = difference.PropertyPath,
+                            EntityId = Convert.ChangeType(difference.NewValue!, idProperty.PropertyType),
+                            NewValue = difference.OldValue,
+                            OldValue = difference.NewValue,
+                            Childs = difference.Childs
+                        };
+
+                        yield return newRemoveDifference;
+                        continue;
+                    }
+                }
+                
+                var newOtherDifference = new Difference
+                {
+                    Id = identificationService.GetNextId(),
+                    PropertyPath = difference.PropertyPath,
+                    EntityId = difference.EntityId,
+                    NewValue = difference.OldValue,
+                    OldValue = difference.NewValue,
+                    Childs = difference.Childs
+                };
+
+                yield return newOtherDifference;
+                continue;
+            }
+            
+            // Свойство, для которого данное изменение
+            var property = properties.FirstOrDefault(s => s.Name == difference.PropertyPath);
+            if (property == null)
+                continue;
+
+            var memberType = property.PropertyType.GenericTypeArguments.FirstOrDefault() ?? property.PropertyType;
+            
+            // Изменение с вложенными
+            var newDifferenceWithChilds = new Difference
+            {
+                Id = identificationService.GetNextId(),
+                PropertyPath = difference.PropertyPath,
+                EntityId = difference.EntityId,
+                NewValue = difference.OldValue,
+                OldValue = difference.NewValue,
+                Childs = GetRevertingDifferences(difference.Childs!, memberType)
+                    .ToList()
+            };
+
+            yield return newDifferenceWithChilds;
+        }
+    }
+    
     public object Build(Type typeOfObject, IEnumerable<Difference> differences)
     {
         var obj = typeOfObject.GetInstance();
@@ -27,11 +116,24 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
 
     public object Patch(object sourceObject, IEnumerable<Difference> differences) => 
         InternalPatch(sourceObject, differences);
-
-    public IEnumerable<Difference> GetDifferences(object? primaryObj, object secondaryObj)
+    
+    public object Unpatch(object sourceObject, IEnumerable<Difference> differences)
     {
+        if (sourceObject == null!)
+            throw new ArgumentException("Для построения объекта из null используй метод Build.");
+        
+        return InternalPatch(sourceObject, GetRevertingDifferences(differences, sourceObject.GetType()));
+    }
+
+    public IEnumerable<Difference> GetDifferences(object? primaryObj, object? secondaryObj)
+    {
+        if (primaryObj == null && secondaryObj == null)
+            throw new ArgumentException("Оба объекта равны null.");
+        
         if (secondaryObj == null)
-            throw new ArgumentException($"Второй объект равен null.");
+            return GetRevertingDifferences(GetDifferences(secondaryObj, primaryObj), primaryObj!.GetType());
+        
+        identificationService.Flush();
         
         return InternalGetDifferences(primaryObj, secondaryObj);
     }
