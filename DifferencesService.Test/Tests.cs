@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using DifferencesService.Interfaces;
+using DifferencesService.Models;
 using DifferencesService.Modules;
 using DifferencesService.Options;
 using DifferencesService.Test.Models;
@@ -332,6 +333,253 @@ public class Tests
         ClassicAssert.True(jsonDiffP1ToNewP1 == null);
         ClassicAssert.True(jsonDiffP2ToNewP2 == null);
         ClassicAssert.True(jsonDiffP3ToNewP3 == null);
+    }
+    
+    [Test(Description = "Тест получения инвертированных изменений")]
+    public void TestRevertingDifferences()
+    {
+        var p1 = GetEmptyProduct();
+        var p2 = GetFullProduct();
+        var p3 = GetOtherFullProduct();
+
+        #region Получение изменений
+
+        var diffNullToP1 = _differenceHandler.GetDifferences(null, p1).ToList();
+        var diffNullToP2 = _differenceHandler.GetDifferences(null, p2).ToList();
+        var diffNullToP3 = _differenceHandler.GetDifferences(null, p3).ToList();
+        
+        var diffP1ToNull = _differenceHandler.GetDifferences(p1, null).ToList();
+        var diffP2ToNull = _differenceHandler.GetDifferences(p2, null).ToList();
+        var diffP3ToNull = _differenceHandler.GetDifferences(p3, null).ToList();
+        
+        var diffP2ToP1 = _differenceHandler.GetDifferences(p2, p1).ToList();
+        var diffP3ToP1 = _differenceHandler.GetDifferences(p3, p1).ToList();
+        
+        var diffP1ToP2 = _differenceHandler.GetDifferences(p1, p2).ToList();
+        var diffP3ToP2 = _differenceHandler.GetDifferences(p3, p2).ToList();
+        
+        var diffP1ToP3 = _differenceHandler.GetDifferences(p1, p3).ToList();
+        var diffP2ToP3 = _differenceHandler.GetDifferences(p2, p3).ToList();
+        
+        var revertingDiffNullToP1 = _differenceHandler.GetRevertingDifferences(diffNullToP1, p1.GetType()).ToList();
+        var revertingDiffNullToP2 = _differenceHandler.GetRevertingDifferences(diffNullToP2, p2.GetType()).ToList();
+        var revertingDiffNullToP3 = _differenceHandler.GetRevertingDifferences(diffNullToP3, p3.GetType()).ToList();
+        
+        var revertingDiffP1ToNull = _differenceHandler.GetRevertingDifferences(diffP1ToNull, p1.GetType()).ToList();
+        var revertingDiffP2ToNull = _differenceHandler.GetRevertingDifferences(diffP2ToNull, p2.GetType()).ToList();
+        var revertingDiffP3ToNull = _differenceHandler.GetRevertingDifferences(diffP3ToNull, p3.GetType()).ToList();
+        
+        var revertingDiffP2ToP1 = _differenceHandler.GetRevertingDifferences(diffP2ToP1, p2.GetType()).ToList();
+        var revertingDiffP3ToP1 = _differenceHandler.GetRevertingDifferences(diffP3ToP1, p3.GetType()).ToList();
+        
+        var revertingDiffP1ToP2 = _differenceHandler.GetRevertingDifferences(diffP1ToP2, p1.GetType()).ToList();
+        var revertingDiffP3ToP2 = _differenceHandler.GetRevertingDifferences(diffP3ToP2, p3.GetType()).ToList();
+        
+        var revertingDiffP1ToP3 = _differenceHandler.GetRevertingDifferences(diffP1ToP3, p1.GetType()).ToList();
+        var revertingDiffP2ToP3 = _differenceHandler.GetRevertingDifferences(diffP2ToP3, p2.GetType()).ToList();
+
+        #endregion Получение изменений
+
+        #region Сбрасываем Id для сравнения
+
+        ResetIds(diffNullToP1); ResetIds(diffNullToP2); ResetIds(diffNullToP3); ResetIds(diffP1ToNull); ResetIds(diffP2ToNull); ResetIds(diffP3ToNull); ResetIds(diffP2ToP1);
+        ResetIds(diffP3ToP1); ResetIds(diffP1ToP2); ResetIds(diffP3ToP2); ResetIds(diffP1ToP3); ResetIds(diffP2ToP3);
+        ResetIds(revertingDiffNullToP1); ResetIds(revertingDiffNullToP2); ResetIds(revertingDiffNullToP3); ResetIds(revertingDiffP1ToNull); ResetIds(revertingDiffP2ToNull); ResetIds(revertingDiffP3ToNull);
+        ResetIds(revertingDiffP2ToP1); ResetIds(revertingDiffP3ToP1); ResetIds(revertingDiffP1ToP2); ResetIds(revertingDiffP3ToP2); ResetIds(revertingDiffP1ToP3); ResetIds(revertingDiffP2ToP3);
+
+        #endregion Сбрасываем Id для сравнения
+        
+        var jsonDiffP1ToNull = _jsonDiffPatch.Diff
+        (
+            JToken.FromObject(diffNullToP1),
+            JToken.FromObject(revertingDiffP1ToNull)
+        );
+        
+        var jsonDiffP2ToNull = _jsonDiffPatch.Diff
+        (
+            JToken.FromObject(diffNullToP2),
+            JToken.FromObject(revertingDiffP2ToNull)
+        );
+        
+        var jsonDiffP3ToNull = _jsonDiffPatch.Diff
+        (
+            JToken.FromObject(diffNullToP3),
+            JToken.FromObject(revertingDiffP3ToNull)
+        );
+        
+        var jsonDiffP1ToP2 = _jsonDiffPatch.Diff
+        (
+            JToken.FromObject(OrderByEntityIdAndPropertyPath(diffP2ToP1)),
+            JToken.FromObject(OrderByEntityIdAndPropertyPath(revertingDiffP1ToP2))
+        );
+        
+        var jsonDiffP1ToP3 = _jsonDiffPatch.Diff
+        (
+            JToken.FromObject(OrderByEntityIdAndPropertyPath(diffP3ToP1)),
+            JToken.FromObject(OrderByEntityIdAndPropertyPath(revertingDiffP1ToP3))
+        );
+        
+        var jsonDiffP2ToP3 = _jsonDiffPatch.Diff
+        (
+            JToken.FromObject(OrderByEntityIdAndPropertyPath(diffP3ToP2)),
+            JToken.FromObject(OrderByEntityIdAndPropertyPath(revertingDiffP2ToP3))
+        );
+        
+        ClassicAssert.True(jsonDiffP1ToNull == null);
+        ClassicAssert.True(jsonDiffP2ToNull == null);
+        ClassicAssert.True(jsonDiffP3ToNull == null);
+        ClassicAssert.True(jsonDiffP1ToP2 == null);
+        ClassicAssert.True(jsonDiffP1ToP3 == null);
+        ClassicAssert.True(jsonDiffP2ToP3 == null);
+    }
+
+    private void ResetIds(List<Difference> diffs)
+    {
+        foreach (var diff in diffs)
+        {
+            diff.Id = 0;
+            if (diff.Childs != null)
+                ResetIds(diff.Childs);
+        }
+    }
+
+    private IEnumerable<Difference> OrderByEntityIdAndPropertyPath(List<Difference> diffs) =>
+        diffs
+            .OrderBy(s => $"{s.EntityId}{s.NewValue}{s.OldValue}{s.PropertyPath}")
+            .Select(diff => new Difference
+            {
+                Id = diff.Id,
+                PropertyPath = diff.PropertyPath,
+                NewValue = diff.NewValue,
+                OldValue = diff.NewValue,
+                EntityId = diff.EntityId,
+                Childs = diff.Childs != null
+                    ? OrderByEntityIdAndPropertyPath(diff.Childs).ToList()
+                    : null
+            });
+
+    [Test(Description = "Тест получение объекта с изменениями")]
+    public void TestUnpatchAdd_TestGetObjectWithDifferences()
+    {
+        var p1 = GetEmptyProduct();
+        var p2 = GetFullProduct();
+        var p3 = GetOtherFullProduct();
+
+        var diffP1ToP2 = _differenceHandler.GetDifferences(p1, p2);
+        var diffP1ToP3 = _differenceHandler.GetDifferences(p1, p3);
+
+        var fromP1ToP2WithDifferences = _differenceObjectProvider.GetObjectWithDifferences(p1, diffP1ToP2);
+        var fromP1ToP3WithDifferences = _differenceObjectProvider.GetObjectWithDifferences(p1, diffP1ToP3);
+        
+        var jsonDiffP1ToP2 = _jsonDiffPatch.Diff
+        (
+            JToken.Parse(JsonConvert.SerializeObject(fromP1ToP2WithDifferences)),
+            _p1ToP2WithDifference
+        );
+
+        var jsonDiffP1ToP3 = _jsonDiffPatch.Diff
+        (
+            JToken.Parse(JsonConvert.SerializeObject(fromP1ToP3WithDifferences)),
+            _p1ToP3WithDifference
+        );
+        
+        ClassicAssert.True(jsonDiffP1ToP2 == null);
+        ClassicAssert.True(jsonDiffP1ToP3 == null);
+    }
+    
+    [Test(Description = "Тест получение объекта с изменениями")]
+    public void TestUnpatchRemove_TestGetObjectWithDifferences()
+    {
+        var p1 = GetEmptyProduct();
+        var p2 = GetFullProduct();
+        var p3 = GetOtherFullProduct();
+
+        var diffP2ToP1 = _differenceHandler.GetDifferences(p2, p1);
+        var diffP3ToP1 = _differenceHandler.GetDifferences(p3, p1);
+
+        var fromP2ToP1WithDifferences = _differenceObjectProvider.GetObjectWithDifferences(p2, diffP2ToP1);
+        var fromP3ToP1WithDifferences = _differenceObjectProvider.GetObjectWithDifferences(p3, diffP3ToP1);
+
+        var jsonDiffP2ToP1 = _jsonDiffPatch.Diff
+        (
+            JToken.Parse(JsonConvert.SerializeObject(fromP2ToP1WithDifferences)),
+            _p2ToP1WithDifference
+        );
+
+        var jsonDiffP3ToP1 = _jsonDiffPatch.Diff
+        (
+            JToken.Parse(JsonConvert.SerializeObject(fromP3ToP1WithDifferences)),
+            _p3ToP1WithDifference
+        );
+        
+        ClassicAssert.True(jsonDiffP2ToP1 == null);
+        ClassicAssert.True(jsonDiffP3ToP1 == null);
+    }
+    
+    [Test(Description = "Тест получение объекта с изменениями")]
+    public void TestUnpatchChange_TestGetObjectWithDifferences()
+    {
+        var p2 = GetFullProduct();
+        var p3 = GetOtherFullProduct();
+
+        var diffP2ToP3 = _differenceHandler.GetDifferences(p2, p3);
+        var diffP3ToP2 = _differenceHandler.GetDifferences(p3, p2);
+        
+        var fromP2ToP3WithDifferences = _differenceObjectProvider.GetObjectWithDifferences(p2, diffP2ToP3);
+        var fromP3ToP2WithDifferences = _differenceObjectProvider.GetObjectWithDifferences(p3, diffP3ToP2);
+
+        var jsonDiffP2ToP3 = _jsonDiffPatch.Diff
+        (
+            JToken.Parse(JsonConvert.SerializeObject(fromP2ToP3WithDifferences)),
+            _p2ToP3WithDifference
+        );
+
+        var jsonDiffP3ToP2 = _jsonDiffPatch.Diff
+        (
+            JToken.Parse(JsonConvert.SerializeObject(fromP3ToP2WithDifferences)),
+            _p3ToP2WithDifference
+        );
+        
+        ClassicAssert.True(jsonDiffP2ToP3 == null);
+        ClassicAssert.True(jsonDiffP3ToP2 == null);
+    }
+    
+    [Test(Description = "Тест получение объекта без изменений")]
+    public void TestUnpatchWithoutChanges_TestGetObjectWithDifferences()
+    {
+        var p1 = GetEmptyProduct();
+        var p2 = GetFullProduct();
+        var p3 = GetOtherFullProduct();
+
+        var diffP1ToP1 = _differenceHandler.GetDifferences(p1, p1);
+        var diffP2ToP2 = _differenceHandler.GetDifferences(p2, p2);
+        var diffP3ToP3 = _differenceHandler.GetDifferences(p3, p3);
+
+        var fromP1WithoutDifferences = _differenceObjectProvider.GetObjectWithDifferences(p1, diffP1ToP1);
+        var fromP2WithoutDifferences = _differenceObjectProvider.GetObjectWithDifferences(p2, diffP2ToP2);
+        var fromP3WithoutDifferences = _differenceObjectProvider.GetObjectWithDifferences(p3, diffP3ToP3);
+
+        var jsonDiffP1ToP1 = _jsonDiffPatch.Diff
+        (
+            JToken.Parse(JsonConvert.SerializeObject(fromP1WithoutDifferences)),
+            _p1WithoutDifference
+        );
+        
+        var jsonDiffP2ToP2 = _jsonDiffPatch.Diff
+        (
+            JToken.Parse(JsonConvert.SerializeObject(fromP2WithoutDifferences)),
+            _p2WithoutDifference
+        );
+
+        var jsonDiffP3ToP3 = _jsonDiffPatch.Diff
+        (
+            JToken.Parse(JsonConvert.SerializeObject(fromP3WithoutDifferences)),
+            _p3WithoutDifference
+        );
+        
+        ClassicAssert.True(jsonDiffP1ToP1 == null);
+        ClassicAssert.True(jsonDiffP2ToP2 == null);
+        ClassicAssert.True(jsonDiffP3ToP3 == null);
     }
 
     #region GetProducts
