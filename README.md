@@ -3,11 +3,14 @@
 ### Получение различий между двумя объектами
 
 Функциональность представлена _IDifferenceHandler_ и предоставляет следующие механизмы:
-- Получение списка различий (класс _Difference_) - **GetDifferences(object? primaryObj, object secondaryObj)**
+- Получение списка различий (класс _Difference_) - **GetDifferences(object? primaryObj, object? secondaryObj)**
 
-  В качестве первого параметра можно передать null, тогда в результирующих _IEnumerable\<Difference\>_ будет инициализирующее свойство (установка ИС);
+  В качестве первого параметра можно передать _null_, тогда в результирующих _IEnumerable\<Difference\>_ будет инициализирующее свойство (установка ИС);
+  Если передать _null_ в качестве второго параметра - будет произведён вызов _GetDifferences_ с изменением порядка объектов, а затем изменения буду инвертированы;
 - Метод применения изменений к объекту - **Patch(object sourceObject, IEnumerable\<Difference\> differences)**;
+- Метод отката изменений к объекту - **Unpatch(object sourceObject, IEnumerable\<Difference\> differences)**;
 - Метод **object Build(Type typeOfObject, IEnumerable\<Difference\> differences)** позволяющий по типу и списку изменений, содержащих инициализирующее свойство (установку ИС) получить объект.
+- Метод **IEnumerable\<Difference\> GetRevertingDifferences(IEnumerable\<Difference\> differences, Type typeOfObject)** позволяющий инвертировать изменения.
 
 Для подключения функциональности представлены методы расширения:
 - **IServiceCollection UseDifferenceService<TId>(this IServiceCollection services)**
@@ -397,6 +400,3 @@
 }
 ```
 </details>
-
-### TODO
-1) Реализовать метод _Unpatch_ для отката изменений объекта по списку изменений.
