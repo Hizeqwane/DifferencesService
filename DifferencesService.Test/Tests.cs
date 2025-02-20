@@ -66,9 +66,9 @@ public class Tests
 
         var diff = _differenceHandler.GetDifferences(p1, p2);
         
-        var p1Patch = _differenceHandler.Patch(p1, diff);
+        _differenceHandler.Patch(p1, diff);
 
-        var jP1Patch = JToken.FromObject(p1Patch);
+        var jP1Patch = JToken.FromObject(p1);
         var jP2 = JToken.FromObject(p2);
         
         ClassicAssert.True(_jsonDiffPatch.Diff(jP1Patch, jP2) == null);
@@ -82,9 +82,9 @@ public class Tests
 
         var diff = _differenceHandler.GetDifferences(p2, p1);
 
-        var p2Patch = _differenceHandler.Patch(p2, diff);
+        _differenceHandler.Patch(p2, diff);
         
-        var jP2Patch = JToken.FromObject(p2Patch);
+        var jP2Patch = JToken.FromObject(p2);
         var jP1 = JToken.FromObject(p1);
         
         ClassicAssert.True(_jsonDiffPatch.Diff(jP2Patch, jP1) == null);
@@ -93,54 +93,75 @@ public class Tests
     [Test(Description = "Тест изменения внутри")]
     public void TestChange()
     {
+        var p1ToP2 = GetEmptyProduct();
+        var p1ToP3 = GetEmptyProduct();
+        var p1ToP2ToP3 = GetEmptyProduct();
+        var p1ToP3ToP2 = GetEmptyProduct();
+        
+        var p2ToP1 = GetFullProduct();
+        var p2ToP3 = GetFullProduct();
+        var p2ToP1ToP3 = GetFullProduct();
+        var p2ToP3ToP1 = GetFullProduct();
+        
+        var p3ToP1 = GetOtherFullProduct();
+        var p3ToP2 = GetOtherFullProduct();
+        var p3ToP1ToP2 = GetOtherFullProduct();
+        var p3ToP2ToP1 = GetOtherFullProduct();
+
+        var diffP2ToP1 = _differenceHandler.GetDifferences(p2ToP1, p1ToP2).ToList();
+        var diffP3ToP1 = _differenceHandler.GetDifferences(p3ToP1, p1ToP2).ToList();
+        
+        var diffP1ToP2 = _differenceHandler.GetDifferences(p1ToP2, p2ToP1).ToList();
+        var diffP3ToP2 = _differenceHandler.GetDifferences(p3ToP2, p2ToP1).ToList();
+        
+        var diffP1ToP3 = _differenceHandler.GetDifferences(p1ToP3, p3ToP1).ToList();
+        var diffP2ToP3 = _differenceHandler.GetDifferences(p2ToP3, p3ToP1).ToList();
+
+        _differenceHandler.Patch(p2ToP1, diffP2ToP1);
+        _differenceHandler.Patch(p2ToP1ToP3, diffP2ToP1);
+        _differenceHandler.Patch(p3ToP1, diffP3ToP1);
+        _differenceHandler.Patch(p3ToP1ToP2, diffP3ToP1);
+        
+        _differenceHandler.Patch(p1ToP2, diffP1ToP2);
+        _differenceHandler.Patch(p1ToP2ToP3, diffP1ToP2);
+        _differenceHandler.Patch(p3ToP2, diffP3ToP2);
+        _differenceHandler.Patch(p3ToP2ToP1, diffP3ToP2);
+        
+        _differenceHandler.Patch(p1ToP3, diffP1ToP3);
+        _differenceHandler.Patch(p1ToP3ToP2, diffP1ToP3);
+        _differenceHandler.Patch(p2ToP3, diffP2ToP3);
+        _differenceHandler.Patch(p2ToP3ToP1, diffP2ToP3);
+        
+        _differenceHandler.Patch(p1ToP2ToP3, diffP2ToP3);
+        _differenceHandler.Patch(p1ToP3ToP2, diffP3ToP2);
+        
+        _differenceHandler.Patch(p2ToP1ToP3, diffP1ToP3);
+        _differenceHandler.Patch(p2ToP3ToP1, diffP3ToP1);
+
+        _differenceHandler.Patch(p3ToP1ToP2, diffP1ToP2);
+        _differenceHandler.Patch(p3ToP2ToP1, diffP2ToP1);
+
         var p1 = GetEmptyProduct();
         var p2 = GetFullProduct();
         var p3 = GetOtherFullProduct();
-
-        var diffP2ToP1 = _differenceHandler.GetDifferences(p2, p1).ToList();
-        var diffP3ToP1 = _differenceHandler.GetDifferences(p3, p1).ToList();
         
-        var diffP1ToP2 = _differenceHandler.GetDifferences(p1, p2).ToList();
-        var diffP3ToP2 = _differenceHandler.GetDifferences(p3, p2).ToList();
-        
-        var diffP1ToP3 = _differenceHandler.GetDifferences(p1, p3).ToList();
-        var diffP2ToP3 = _differenceHandler.GetDifferences(p2, p3).ToList();
-
-        var p2PatchToP1 = _differenceHandler.Patch(p2, diffP2ToP1);
-        var p3PatchToP1 = _differenceHandler.Patch(p3, diffP3ToP1);
-        
-        var p1PatchToP2 = _differenceHandler.Patch(p1, diffP1ToP2);
-        var p3PatchToP2 = _differenceHandler.Patch(p3, diffP3ToP2);
-        
-        var p1PatchToP3 = _differenceHandler.Patch(p1, diffP1ToP3);
-        var p2PatchToP3 = _differenceHandler.Patch(p2, diffP2ToP3);
-        
-        var p1PatchToP2PatchToP3 = _differenceHandler.Patch(p1PatchToP2, diffP2ToP3);
-        var p1PatchToP3PatchToP2 = _differenceHandler.Patch(p1PatchToP3, diffP3ToP2);
-        
-        var p2PatchToP1PatchToP3 = _differenceHandler.Patch(p2PatchToP1, diffP1ToP3);
-        var p2PatchToP3PatchToP1 = _differenceHandler.Patch(p2PatchToP3, diffP3ToP1);
-        
-        var p3PatchToP1PatchToP2 = _differenceHandler.Patch(p3PatchToP1, diffP1ToP2);
-        var p3PatchToP2PatchToP1 = _differenceHandler.Patch(p3PatchToP2, diffP2ToP1);
-
         var jp1 = JToken.FromObject(p1);
         var jp2 = JToken.FromObject(p2);
         var jp3 = JToken.FromObject(p3);
         
-        var jp2PatchToP1 = JToken.FromObject(p2PatchToP1);
-        var jp3PatchToP1 = JToken.FromObject(p3PatchToP1);
-        var jp1PatchToP2 = JToken.FromObject(p1PatchToP2);
-        var jp3PatchToP2 = JToken.FromObject(p3PatchToP2);
-        var jp1PatchToP3 = JToken.FromObject(p1PatchToP3);
-        var jp2PatchToP3 = JToken.FromObject(p2PatchToP3);
+        var jp2PatchToP1 = JToken.FromObject(p2ToP1);
+        var jp3PatchToP1 = JToken.FromObject(p3ToP1);
+        var jp1PatchToP2 = JToken.FromObject(p1ToP2);
+        var jp3PatchToP2 = JToken.FromObject(p3ToP2);
+        var jp1PatchToP3 = JToken.FromObject(p1ToP3);
+        var jp2PatchToP3 = JToken.FromObject(p2ToP3);
         
-        var jp1PatchToP2PatchToP3 = JToken.FromObject(p1PatchToP2PatchToP3);
-        var jp1PatchToP3PatchToP2 = JToken.FromObject(p1PatchToP3PatchToP2);
-        var jp2PatchToP1PatchToP3 = JToken.FromObject(p2PatchToP1PatchToP3);
-        var jp2PatchToP3PatchToP1 = JToken.FromObject(p2PatchToP3PatchToP1);
-        var jp3PatchToP1PatchToP2 = JToken.FromObject(p3PatchToP1PatchToP2);
-        var jp3PatchToP2PatchToP1 = JToken.FromObject(p3PatchToP2PatchToP1);
+        var jp1PatchToP2PatchToP3 = JToken.FromObject(p1ToP2ToP3);
+        var jp1PatchToP3PatchToP2 = JToken.FromObject(p1ToP3ToP2);
+        var jp2PatchToP1PatchToP3 = JToken.FromObject(p2ToP1ToP3);
+        var jp2PatchToP3PatchToP1 = JToken.FromObject(p2ToP3ToP1);
+        var jp3PatchToP1PatchToP2 = JToken.FromObject(p3ToP1ToP2);
+        var jp3PatchToP2PatchToP1 = JToken.FromObject(p3ToP2ToP1);
         
         ClassicAssert.True(_jsonDiffPatch.Diff(jp2PatchToP1, jp1) == null);
         ClassicAssert.True(_jsonDiffPatch.Diff(jp3PatchToP1, jp1) == null);

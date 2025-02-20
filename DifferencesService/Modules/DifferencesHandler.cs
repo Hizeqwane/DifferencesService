@@ -98,9 +98,9 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
         }
     }
     
-    public object Build(Type typeOfObject, IEnumerable<Difference> differences)
+    public object? Build(Type typeOfObject, IEnumerable<Difference> differences)
     {
-        var obj = typeOfObject.GetInstance();
+        var obj = typeOfObject.GetDefaultInstance();
         var idProperty = identificationService.FindIdPropertyAndThrow(typeOfObject);
 
         var differenceList = differences.ToList();
@@ -111,18 +111,20 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
         
         idProperty.SetValue(obj, Convert.ChangeType(newIdDifference.NewValue, idProperty.PropertyType));
         
-        return InternalPatch(obj!, differenceList.Where(s => s != newIdDifference));
+        InternalPatch(obj!, differenceList.Where(s => s != newIdDifference));
+
+        return obj;
     }
 
-    public object Patch(object sourceObject, IEnumerable<Difference> differences) => 
+    public void Patch(object sourceObject, IEnumerable<Difference> differences) => 
         InternalPatch(sourceObject, differences);
     
-    public object Unpatch(object sourceObject, IEnumerable<Difference> differences)
+    public void Unpatch(object sourceObject, IEnumerable<Difference> differences)
     {
         if (sourceObject == null!)
             throw new ArgumentException("Для построения объекта из null используй метод Build.");
         
-        return InternalPatch(sourceObject, GetRevertingDifferences(differences, sourceObject.GetType()));
+        InternalPatch(sourceObject, GetRevertingDifferences(differences, sourceObject.GetType()));
     }
 
     public IEnumerable<Difference> GetDifferences(object? primaryObj, object? secondaryObj)
@@ -140,16 +142,14 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
 
     #region Internal patch
 
-    private object InternalPatch(object sourceObj, IEnumerable<Difference> differences)
+    private void InternalPatch(object sourceObj, IEnumerable<Difference> differences)
     {
         var typeOfObject = sourceObj.GetType();
-        
-        var obj = JsonConvert.DeserializeObject(JsonConvert.SerializeObject(sourceObj), typeOfObject)!;
         
         var properties = typeOfObject.GetProperties();
 
         var idProperty = identificationService.FindIdPropertyAndThrow(typeOfObject, properties);
-        var idPropertyValue = idProperty.GetValue(obj);
+        var idPropertyValue = idProperty.GetValue(sourceObj);
         
         foreach (var difference in differences.Where(s => s.EntityId.IsEqualsFromToString(idPropertyValue)))
         {
@@ -157,8 +157,8 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
             var property = properties.FirstOrDefault(s => s.Name == difference.PropertyPath);
             if (property == null)
                 continue;
-
-            var propertyValue = GetPropertyValue(property, obj, difference);
+            
+            var propertyValue = GetPropertyValue(property, sourceObj, difference);
             // Внутри GetPropertyValue уже установили значение
             if (property.PropertyType.IsSimple() || property.PropertyType.IsArray)
                 continue;
@@ -177,21 +177,18 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
                 if (difference.Childs?.Any(s => s.PropertyPath == identificationService.GetIdPropertyName(property.PropertyType) &&
                                                s.NewValue == null) != false)
                 {
-                    property.SetValue(obj, null);
+                    property.SetValue(sourceObj, null);
                     continue;
                 }
                 
-                var newPropertyValue = InternalPatch(propertyValue!, difference.Childs);
-                property.SetValue(obj, newPropertyValue);
+                InternalPatch(propertyValue!, difference.Childs);
                 
                 continue;
             }
             
             // Обрабатываем массивы непримитивных объектов
-            ComplicatingCollectionHandle(obj, property, valueList, difference);
+            ComplicatingCollectionHandle(sourceObj, property, valueList, difference);
         }
-
-        return obj;
     }
 
     /// <summary>
@@ -213,9 +210,9 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
         {
             // Сравниваем OldValue с текущим
             // если не равны - не изменяем
-            if (difference.OldValue.IsEqualsFromToString(propertyValue))
+            if (difference.OldValue.IsEqualsFromToString(propertyValue)) 
                 property.SetValue(obj, difference.NewValue.ChangeType(property.PropertyType));
-            
+
             return propertyValue;
         }
         
@@ -265,7 +262,7 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
         
         // Если получили null и свойство не примитивное - создаём инстанс
         // !!! ВНИМАНИЕ !!! Объект должен иметь конструктор без параметров
-        propertyValue = property.PropertyType.GetInstance();
+        propertyValue = property.PropertyType.GetDefaultInstance();
 
         try
         {
@@ -275,8 +272,7 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
             if (idDifference == null)
                 throw new ArgumentException($"Для свойства {property.Name} не удалось найти дочернего изменения с установкой Id.");
 
-            idProperty.SetValue(propertyValue, Convert.ChangeType(idDifference.NewValue, idProperty.PropertyType));
-
+            idProperty.SetValue(propertyValue, idDifference.NewValue.ChangeType(idProperty.PropertyType));
         }
         catch (IdPropertyNotFoundException)// Не нашли идентификационное свойство - наткнулись на список
         {}
@@ -329,7 +325,7 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
         {
             var id = idProperty.GetValue(valueList[i]);
 
-            var afterPatch = InternalPatch
+            InternalPatch
             (
                 valueList[i],
                 difference.Childs
@@ -339,8 +335,6 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
                              s.EntityId!.IsEqualsFromToString(id)
                     )
             );
-
-            valueList[i] = afterPatch;
         }
         
         var listType = typeof(List<>).MakeGenericType(elemType);
@@ -368,7 +362,7 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
                         s.OldValue == null)
             .Select(s =>
             {
-                var newElem = elemType.GetInstance();
+                var newElem = elemType.GetDefaultInstance();
                 elemIdProperty.SetValue(newElem, Convert.ChangeType(s.NewValue, elemIdProperty.PropertyType));
                 
                 return newElem;
@@ -403,7 +397,7 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
         {
             var id = idProperty.GetValue(secondaryObj)!;
                 
-            primaryObj = typeOfObject.GetInstance()!;
+            primaryObj = typeOfObject.GetDefaultInstance()!;
             idProperty.SetValue(primaryObj, Convert.ChangeType(id, idProperty.PropertyType));
             
             differencesList.Add(new Difference
@@ -617,7 +611,7 @@ public class DifferencesHandler(IIdentificationService identificationService) : 
                     Id = identificationService.GetNextId(),
                     EntityId = id!,
                     PropertyPath = property.Name,
-                    OldValue = null,
+                    OldValue = property.PropertyType.GetDefaultInstance(),
                     NewValue = propertyValue?.ToString(),
                     Childs = null
                 };

@@ -12,15 +12,6 @@ public static class ExtHelper
         TypeDescriptor.GetConverter(type).CanConvertFrom(typeof(string))
         || type == typeof(DateTime?)
         || type == typeof(Guid?);
-    
-    public static object? GetInstance(this Type propertyType)
-    {
-        var ctorWithoutParameters = propertyType.GetConstructors()?.FirstOrDefault(s => s.GetParameters()?.Any() != true);
-        if (ctorWithoutParameters == null)
-            throw new ArgumentException($"Тип {propertyType.FullName} должен иметь конструктор без параметров.");
-        
-        return ctorWithoutParameters?.Invoke(null);
-    }
 
     /// <summary>
     /// Меняет типы для примитивных типов + расширение для Guid и DateTime?
@@ -29,17 +20,22 @@ public static class ExtHelper
     /// <param name="type"></param>
     /// <returns></returns>
     public static object? ChangeType(this object? value, Type? type) =>
-        type == null
-        ? null 
-        : value == null
-            ? value
-            : type == typeof(Guid)
-                ? Guid.Parse(value.ToString()!)
-                : type == typeof(Guid?)
-                    ? Guid.Parse(value.ToString()!)
-                    : type == typeof(DateTime?) 
-                        ? Convert.ChangeType(value.ToString(), typeof(DateTime))
-                        : Convert.ChangeType(value?.ToString(), type);
+        type switch
+        {
+            _ when type == null || value == null => null,
+            _ when type == typeof(DateTimeOffset) ||
+                   type == typeof(DateTimeOffset?) => 
+                DateTimeOffset.TryParse(value.ToString()!, out var parsedDateTimeOffset)
+                    ? parsedDateTimeOffset
+                    : null,
+            _ when type == typeof(Guid) ||
+                   type == typeof(Guid?) => 
+                Guid.TryParse(value.ToString()!, out var parsedGuid)
+                    ? parsedGuid
+                    : null,
+            _ when type.GUID == typeof(Nullable<>).GUID => Convert.ChangeType(value.ToString(), type.GenericTypeArguments.Single()),
+            _ => Convert.ChangeType(value.ToString(), type)
+        };
 
     public static string? GetArrayStrValue(this IEnumerable<object>? list) =>
         list != null
@@ -58,4 +54,11 @@ public static class ExtHelper
                 valueList.Remove(founded);
         }
     }
+    
+    public static object? GetDefaultInstance(this Type t) => 
+        t == typeof(string) ||
+        (t.IsValueType &&
+        Nullable.GetUnderlyingType(t) != null)
+            ? null
+            : Activator.CreateInstance(t, true);
 }
